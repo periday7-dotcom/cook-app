@@ -1,0 +1,19 @@
+{
+  "name": "\ub0c9\uc7a5\uace0 \uc2dd\ub2e8 \ud50c\ub798\ub108",
+  "short_name": "\ub0c9\uc7a5\uace0 \uc2dd\ub2e8",
+  "description": "\ub0c9\uc7a5\uace0 \uc7ac\ub8cc\ub85c \uc810\uc2ec\uacfc \uc800\ub141 \uc77c\uc8fc\uc77c \uc2dd\ub2e8\uc744 \ub9cc\ub4dc\ub294 \ubaa8\ubc14\uc77c \uc2dd\ub2e8 \ud50c\ub798\ub108",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbfaf6",
+  "theme_color": "#24745b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

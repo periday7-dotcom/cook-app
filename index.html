@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#24745b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="냉장고 식단" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>냉장고 식단 플래너</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="app-icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="mobile-appbar">
+      <div>
+        <span>Fridge to Table</span>
+        <strong>냉장고 식단</strong>
+      </div>
+      <button id="installButton" class="install-button" type="button" hidden>설치</button>
+    </header>
+
+    <main class="app-shell">
+      <section class="planner-panel">
+        <div class="intro">
+          <p class="eyebrow">Fridge to Table</p>
+          <h1>냉장고 재료로 7일 두 끼 식단 짜기</h1>
+          <p>
+            보유한 재료를 직접 입력하거나 사진으로 찍어 올리면 점심과 저녁 식단을 만들고,
+            메뉴별 출처 검색 링크와 추가 장보기 예산을 함께 보여줍니다.
+          </p>
+          <button id="desktopInstallButton" class="ghost-button install-inline-button" type="button" hidden>
+            핸드폰 홈 화면에 설치
+          </button>
+        </div>
+
+        <form id="plannerForm" class="ingredient-form">
+          <section class="ocr-card" aria-label="사진으로 재료 입력">
+            <label for="ingredientPhoto">재료 사진</label>
+            <input id="ingredientPhoto" type="file" accept="image/*" capture="environment" />
+            <div class="photo-preview" id="photoPreview">
+              <span>사진을 선택하면 미리보기가 표시됩니다.</span>
+            </div>
+            <button id="ocrButton" class="secondary-button" type="button" disabled>
+              사진에서 재료 읽기
+            </button>
+            <label for="ocrText">인식된 글자</label>
+            <textarea
+              id="ocrText"
+              class="ocr-text"
+              rows="4"
+              placeholder="사진 인식 결과가 여기에 표시됩니다. 틀린 글자는 고친 뒤 반영할 수 있어요."
+            ></textarea>
+            <button id="applyOcrTextButton" class="ghost-button" type="button">
+              인식 글자 재료칸에 반영
+            </button>
+            <p id="ocrStatus" class="ocr-status">
+              한글 OCR은 브라우저에서 처리되며 처음 실행 시 인식 파일을 내려받을 수 있습니다.
+            </p>
+          </section>
+
+          <label for="ingredients">냉장고 재료</label>
+          <textarea
+            id="ingredients"
+            name="ingredients"
+            rows="8"
+            placeholder="예: 닭가슴살, 달걀, 두부, 애호박, 양파, 김치, 밥, 파스타면"
+          ></textarea>
+
+          <div class="form-grid">
+            <label>
+              선호 스타일
+              <select id="style">
+                <option value="balanced">균형 잡힌 집밥</option>
+                <option value="quick">15분 안쪽 간편식</option>
+                <option value="healthy">가볍고 건강하게</option>
+                <option value="korean">한식 위주</option>
+              </select>
+            </label>
+
+            <label>
+              제외할 재료
+              <input id="avoid" type="text" placeholder="예: 매운맛, 밀가루, 해산물" />
+            </label>
+          </div>
+
+          <section class="ratio-card" aria-label="요리 난이도 비율">
+            <div class="ratio-header">
+              <strong>요리 난이도 비율</strong>
+              <span>간편식 비율이 높을수록 쉬운 메뉴가 많아집니다.</span>
+            </div>
+
+            <label class="range-label" for="lunchEase">
+              점심 간편식 비율
+              <span id="lunchEaseValue">70%</span>
+            </label>
+            <input id="lunchEase" type="range" min="0" max="100" step="10" value="70" />
+
+            <label class="range-label" for="dinnerEase">
+              저녁 간편식 비율
+              <span id="dinnerEaseValue">40%</span>
+            </label>
+            <input id="dinnerEase" type="range" min="0" max="100" step="10" value="40" />
+          </section>
+
+          <button type="submit">두 끼 식단 만들기</button>
+        </form>
+      </section>
+
+      <section class="results-panel" aria-live="polite">
+        <div class="results-header">
+          <div>
+            <p class="eyebrow">Weekly Plan</p>
+            <h2>이번 주 점심과 저녁</h2>
+          </div>
+          <button id="sampleButton" class="ghost-button" type="button">샘플 채우기</button>
+        </div>
+
+        <div id="summary" class="summary-card">
+          재료를 입력하고 식단을 만들어보세요.
+        </div>
+
+        <div id="mealPlan" class="meal-grid"></div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
