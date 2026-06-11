@@ -197,10 +197,13 @@ const form = document.querySelector("#plannerForm");
 const ingredientsInput = document.querySelector("#ingredients");
 const avoidInput = document.querySelector("#avoid");
 const styleInput = document.querySelector("#style");
+const startDateInput = document.querySelector("#startDate");
 const lunchEaseInput = document.querySelector("#lunchEase");
 const dinnerEaseInput = document.querySelector("#dinnerEase");
 const lunchEaseValue = document.querySelector("#lunchEaseValue");
 const dinnerEaseValue = document.querySelector("#dinnerEaseValue");
+const alternatePlanButton = document.querySelector("#alternatePlanButton");
+const calendarButton = document.querySelector("#calendarButton");
 const sampleButton = document.querySelector("#sampleButton");
 const summary = document.querySelector("#summary");
 const mealPlan = document.querySelector("#mealPlan");
@@ -215,6 +218,11 @@ const desktopInstallButton = document.querySelector("#desktopInstallButton");
 
 let selectedPhoto = null;
 let deferredInstallPrompt = null;
+let variationSeed = 0;
+let lastPlan = null;
+let lastIngredients = [];
+
+startDateInput.value = getTodayInputValue();
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -329,6 +337,16 @@ sampleButton.addEventListener("click", () => {
   form.requestSubmit();
 });
 
+alternatePlanButton.addEventListener("click", () => {
+  variationSeed += 1;
+  form.requestSubmit();
+});
+
+calendarButton.addEventListener("click", () => {
+  if (!lastPlan) return;
+  downloadCalendarFile(lastPlan, getSelectedStartDate());
+});
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const ingredients = parseList(ingredientsInput.value);
@@ -343,6 +361,10 @@ form.addEventListener("submit", (event) => {
 
   const difficultyPreferences = getDifficultyPreferences();
   const plan = buildPlan(ingredients, avoid, styleInput.value, difficultyPreferences);
+  lastPlan = plan;
+  lastIngredients = ingredients;
+  alternatePlanButton.disabled = false;
+  calendarButton.disabled = false;
   renderPlan(plan, ingredients);
 });
 
@@ -356,6 +378,18 @@ function getDifficultyPreferences() {
     lunch: Number(lunchEaseInput.value),
     dinner: Number(dinnerEaseInput.value)
   };
+}
+
+function getTodayInputValue() {
+  const today = new Date();
+  const offsetDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000);
+  return offsetDate.toISOString().slice(0, 10);
+}
+
+function getSelectedStartDate() {
+  if (!startDateInput.value) return new Date();
+  const [year, month, day] = startDateInput.value.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 function parseList(value) {
@@ -501,7 +535,8 @@ function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePrefer
     return score + (includesIngredient(ingredients, tag) ? 8 : 0);
   }, 0);
   const styleScore = recipe.type === style ? 4 : style === "balanced" ? 1 : 0;
-  const varietyScore = ((dayIndex + 1) * (mealIndex + 2) + recipe.title.length) % 5;
+  const varietyScore =
+    ((dayIndex + 1) * (mealIndex + 2) + recipe.title.length + variationSeed * 7) % 11;
   const targetDifficulty = easeToDifficulty(easePreference);
   const difficultyDistance = Math.abs(getDifficulty(recipe.title) - targetDifficulty);
   const difficultyScore = 8 - difficultyDistance * 5;
@@ -597,9 +632,7 @@ function renderPlan(plan, ingredients) {
 }
 
 function renderMeal(meal) {
-  const query = encodeURIComponent(`${meal.title} 레시피`);
-  const naverUrl = `https://search.naver.com/search.naver?query=${query}`;
-  const youtubeUrl = `https://www.youtube.com/results?search_query=${query}`;
+  const { naverUrl, youtubeUrl } = getRecipeUrls(meal.title);
   const matchedText = meal.matched.length > 0 ? meal.matched.join(", ") : "냉장고 기본 재료";
   const missingText = meal.missing.length > 0 ? meal.missing.join(", ") : "추가 구매 없음";
   const sourceText = "출처: 네이버 검색, 유튜브 검색";
@@ -618,6 +651,109 @@ function renderMeal(meal) {
       </div>
     </section>
   `;
+}
+
+function getRecipeUrls(title) {
+  const query = encodeURIComponent(`${title} 레시피`);
+  return {
+    naverUrl: `https://search.naver.com/search.naver?query=${query}`,
+    youtubeUrl: `https://www.youtube.com/results?search_query=${query}`
+  };
+}
+
+function downloadCalendarFile(plan, startDate) {
+  const events = plan.flatMap((dayPlan, dayIndex) => {
+    return dayPlan.menu.map((meal) => createCalendarEvent(meal, addDays(startDate, dayIndex)));
+  });
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Fridge Meal Planner//Weekly Meals//KO",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    ...events,
+    "END:VCALENDAR"
+  ].join("\r\n");
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `fridge-meal-plan-${startDateInput.value || "week"}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function createCalendarEvent(meal, date) {
+  const startHour = meal.mealKey === "lunch" ? 12 : 18;
+  const startsAt = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startHour, 0, 0);
+  const endsAt = new Date(startsAt.getTime() + Math.max(meal.cookingMinutes, 30) * 60000);
+  const { naverUrl, youtubeUrl } = getRecipeUrls(meal.title);
+  const missingText = meal.missing.length > 0 ? meal.missing.join(", ") : "추가 구매 없음";
+  const description = [
+    `레시피 이름: ${meal.title}`,
+    `유튜브 링크: ${youtubeUrl}`,
+    `블로그/레시피 링크: ${naverUrl}`,
+    `추가 구매 재료: ${missingText}`
+  ].join("\\n");
+
+  return [
+    "BEGIN:VEVENT",
+    `UID:${createEventId()}@fridge-meal-planner`,
+    `DTSTAMP:${formatCalendarDate(new Date(), true)}`,
+    `DTSTART:${formatCalendarDate(startsAt)}`,
+    `DTEND:${formatCalendarDate(endsAt)}`,
+    `SUMMARY:${escapeCalendarText(`[${meal.mealLabel}] ${meal.title}`)}`,
+    `DESCRIPTION:${escapeCalendarText(description)}`,
+    "END:VEVENT"
+  ].join("\r\n");
+}
+
+function addDays(date, dayCount) {
+  const nextDate = new Date(date);
+  nextDate.setDate(date.getDate() + dayCount);
+  return nextDate;
+}
+
+function formatCalendarDate(date, useUtc = false) {
+  const target = useUtc
+    ? {
+        year: date.getUTCFullYear(),
+        month: date.getUTCMonth() + 1,
+        day: date.getUTCDate(),
+        hour: date.getUTCHours(),
+        minute: date.getUTCMinutes(),
+        second: date.getUTCSeconds()
+      }
+    : {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        day: date.getDate(),
+        hour: date.getHours(),
+        minute: date.getMinutes(),
+        second: date.getSeconds()
+      };
+  const stamp = `${target.year}${pad2(target.month)}${pad2(target.day)}T${pad2(target.hour)}${pad2(target.minute)}${pad2(target.second)}`;
+  return useUtc ? `${stamp}Z` : stamp;
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function createEventId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function escapeCalendarText(value) {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
 }
 
 function formatMinutes(minutes) {

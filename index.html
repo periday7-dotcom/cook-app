@@ -84,6 +84,11 @@
               제외할 재료
               <input id="avoid" type="text" placeholder="예: 매운맛, 밀가루, 해산물" />
             </label>
+
+            <label>
+              식단 시작일
+              <input id="startDate" type="date" />
+            </label>
           </div>
 
           <section class="ratio-card" aria-label="요리 난이도 비율">
@@ -106,6 +111,14 @@
           </section>
 
           <button type="submit">두 끼 식단 만들기</button>
+          <div class="plan-actions">
+            <button id="alternatePlanButton" class="secondary-button" type="button" disabled>
+              또 다른 버전의 일주일 식단 짜기
+            </button>
+            <button id="calendarButton" class="ghost-button" type="button" disabled>
+              기본 캘린더에 넣기
+            </button>
+          </div>
         </form>
       </section>
 
