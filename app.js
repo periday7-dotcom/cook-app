@@ -195,6 +195,7 @@ const cookingMinutesByTitle = {
 
 const form = document.querySelector("#plannerForm");
 const ingredientsInput = document.querySelector("#ingredients");
+const mealKitsInput = document.querySelector("#mealKits");
 const avoidInput = document.querySelector("#avoid");
 const styleInput = document.querySelector("#style");
 const startDateInput = document.querySelector("#startDate");
@@ -329,6 +330,7 @@ applyOcrTextButton.addEventListener("click", () => {
 
 sampleButton.addEventListener("click", () => {
   ingredientsInput.value = "닭가슴살, 달걀, 두부, 애호박, 양파, 김치, 밥, 파스타면, 버섯, 오이, 참치";
+  mealKitsInput.value = "컬리 사골떡만둣국, 비마트 닭갈비 밀키트";
   avoidInput.value = "너무 매운맛";
   styleInput.value = "balanced";
   lunchEaseInput.value = "70";
@@ -350,17 +352,18 @@ calendarButton.addEventListener("click", () => {
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const ingredients = parseList(ingredientsInput.value);
+  const mealKits = parseList(mealKitsInput.value);
   const avoid = parseList(avoidInput.value);
 
-  if (ingredients.length === 0) {
-    summary.textContent = "재료를 하나 이상 입력해주세요. 예: 달걀, 김치, 밥";
+  if (ingredients.length === 0 && mealKits.length === 0) {
+    summary.textContent = "재료나 밀키트를 하나 이상 입력해주세요. 예: 달걀, 김치, 밥 또는 부대찌개 밀키트";
     mealPlan.innerHTML = "";
     ingredientsInput.focus();
     return;
   }
 
   const difficultyPreferences = getDifficultyPreferences();
-  const plan = buildPlan(ingredients, avoid, styleInput.value, difficultyPreferences);
+  const plan = buildPlan(ingredients, mealKits, avoid, styleInput.value, difficultyPreferences);
   lastPlan = plan;
   lastIngredients = ingredients;
   alternatePlanButton.disabled = false;
@@ -492,13 +495,14 @@ function setOcrStatus(message, isError = false) {
   ocrStatus.classList.toggle("is-error", isError);
 }
 
-function buildPlan(ingredients, avoid, style, difficultyPreferences) {
+function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences) {
   const usedTitles = new Set();
   const normalizedAvoid = avoid.map(normalize);
+  const recipePool = [...createMealKitRecipes(mealKits), ...recipes];
 
   return days.map((day, dayIndex) => {
     const menu = meals.map(([mealKey, mealLabel], mealIndex) => {
-      const candidates = recipes
+      const candidates = recipePool
         .filter((recipe) => recipe.meal.includes(mealKey))
         .filter((recipe) => !usedTitles.has(recipe.title))
         .filter((recipe) => !normalizedAvoid.some((item) => normalize(recipe.title).includes(item)))
@@ -511,15 +515,19 @@ function buildPlan(ingredients, avoid, style, difficultyPreferences) {
       const selected = candidates[0] || fallbackByMeal[mealKey][dayIndex % fallbackByMeal[mealKey].length];
       usedTitles.add(selected.title);
 
-      const matched = selected.tags.filter((tag) => includesIngredient(ingredients, tag));
-      const missing = selected.tags.filter((tag) => !includesIngredient(ingredients, tag));
+      const matched = selected.isMealKit
+        ? ["밀키트/완제품"]
+        : selected.tags.filter((tag) => includesIngredient(ingredients, tag));
+      const missing = selected.isMealKit
+        ? []
+        : selected.tags.filter((tag) => !includesIngredient(ingredients, tag));
 
       return {
         mealKey,
         mealLabel,
         ...selected,
-        difficulty: getDifficulty(selected.title),
-        cookingMinutes: getCookingMinutes(selected.title),
+        difficulty: selected.isMealKit ? 1 : getDifficulty(selected.title),
+        cookingMinutes: selected.isMealKit ? 15 : getCookingMinutes(selected.title),
         matched,
         missing,
         estimatedBudget: estimateBudget(missing)
@@ -530,6 +538,16 @@ function buildPlan(ingredients, avoid, style, difficultyPreferences) {
   });
 }
 
+function createMealKitRecipes(mealKits) {
+  return mealKits.map((title, index) => ({
+    title,
+    type: "quick",
+    tags: [],
+    meal: index % 2 === 0 ? ["dinner", "lunch"] : ["lunch", "dinner"],
+    isMealKit: true
+  }));
+}
+
 function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePreference) {
   const matchScore = recipe.tags.reduce((score, tag) => {
     return score + (includesIngredient(ingredients, tag) ? 8 : 0);
@@ -537,10 +555,11 @@ function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePrefer
   const styleScore = recipe.type === style ? 4 : style === "balanced" ? 1 : 0;
   const varietyScore =
     ((dayIndex + 1) * (mealIndex + 2) + recipe.title.length + variationSeed * 7) % 11;
+  const mealKitScore = recipe.isMealKit ? 18 - dayIndex : 0;
   const targetDifficulty = easeToDifficulty(easePreference);
-  const difficultyDistance = Math.abs(getDifficulty(recipe.title) - targetDifficulty);
+  const difficultyDistance = Math.abs((recipe.isMealKit ? 1 : getDifficulty(recipe.title)) - targetDifficulty);
   const difficultyScore = 8 - difficultyDistance * 5;
-  return matchScore + styleScore + varietyScore + difficultyScore;
+  return matchScore + styleScore + varietyScore + difficultyScore + mealKitScore;
 }
 
 function easeToDifficulty(easePreference) {
@@ -641,6 +660,7 @@ function renderMeal(meal) {
     <section class="meal-item">
       <span class="meal-time">${meal.mealLabel}</span>
       <p class="meal-title">${meal.title}</p>
+      ${meal.isMealKit ? `<p class="meal-kit-label">밀키트/완제품</p>` : ""}
       <p class="meal-difficulty">난이도: ${getDifficultyLabel(meal.difficulty)} · 조리시간: 약 ${meal.cookingMinutes}분</p>
       <p class="meal-ingredients">활용 재료: ${matchedText}</p>
       <p class="meal-budget">추가 재료: ${missingText} · 예상 ${formatWon(meal.estimatedBudget)}</p>
@@ -694,6 +714,7 @@ function createCalendarEvent(meal, date) {
   const missingText = meal.missing.length > 0 ? meal.missing.join(", ") : "추가 구매 없음";
   const description = [
     `레시피 이름: ${meal.title}`,
+    `구분: ${meal.isMealKit ? "밀키트/완제품" : "직접 조리"}`,
     `유튜브 링크: ${youtubeUrl}`,
     `블로그/레시피 링크: ${naverUrl}`,
     `추가 구매 재료: ${missingText}`
