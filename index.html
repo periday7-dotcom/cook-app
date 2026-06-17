@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#24745b" />
+    <meta name="theme-color" content="#7fc8b6" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="냉장고 식단" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -12,6 +12,7 @@
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="recipes-data.js"></script>
   </head>
   <body>
     <header class="mobile-appbar">
@@ -61,21 +62,70 @@
             </p>
           </section>
 
-          <label for="ingredients">냉장고 재료</label>
-          <textarea
-            id="ingredients"
-            name="ingredients"
-            rows="8"
-            placeholder="예: 닭가슴살, 달걀, 두부, 애호박, 양파, 김치, 밥, 파스타면"
-          ></textarea>
+          <section class="ingredient-board" aria-label="보관 방식별 재료 입력">
+            <div class="section-title">
+              <strong>보유 재료</strong>
+              <span>재료를 입력하고 추가하면 칩으로 정리됩니다.</span>
+            </div>
 
-          <label for="mealKits">밀키트 / 완제품</label>
-          <textarea
-            id="mealKits"
-            class="compact-textarea"
-            rows="4"
-            placeholder="예: 컬리 사골떡만둣국, 쿠팡 곰곰 부대찌개, 비마트 닭갈비 밀키트"
-          ></textarea>
+            <div class="storage-grid">
+              <div class="storage-box" data-storage="cold">
+                <label for="coldIngredient">냉장</label>
+                <div class="chip-input-row">
+                  <input id="coldIngredient" class="ingredient-chip-input" type="text" placeholder="예: 두부" />
+                  <button class="add-chip-button" type="button" data-target="cold">추가</button>
+                </div>
+                <div id="coldChips" class="chip-list" aria-label="냉장 재료 목록"></div>
+              </div>
+
+              <div class="storage-box" data-storage="frozen">
+                <label for="frozenIngredient">냉동</label>
+                <div class="chip-input-row">
+                  <input id="frozenIngredient" class="ingredient-chip-input" type="text" placeholder="예: 새우" />
+                  <button class="add-chip-button" type="button" data-target="frozen">추가</button>
+                </div>
+                <div id="frozenChips" class="chip-list" aria-label="냉동 재료 목록"></div>
+              </div>
+
+              <div class="storage-box" data-storage="room">
+                <label for="roomIngredient">실온보관</label>
+                <div class="chip-input-row">
+                  <input id="roomIngredient" class="ingredient-chip-input" type="text" placeholder="예: 감자" />
+                  <button class="add-chip-button" type="button" data-target="room">추가</button>
+                </div>
+                <div id="roomChips" class="chip-list" aria-label="실온보관 재료 목록"></div>
+              </div>
+
+              <div class="storage-box" data-storage="seasoning">
+                <label for="seasoningIngredient">양념류</label>
+                <div class="chip-input-row">
+                  <input id="seasoningIngredient" class="ingredient-chip-input" type="text" placeholder="예: 고추장" />
+                  <button class="add-chip-button" type="button" data-target="seasoning">추가</button>
+                </div>
+                <div id="seasoningChips" class="chip-list" aria-label="양념류 목록"></div>
+              </div>
+            </div>
+
+            <textarea id="ingredients" name="ingredients" class="legacy-ingredients" rows="4" hidden></textarea>
+          </section>
+
+          <section class="meal-kit-board" aria-label="밀키트 완제품 입력">
+            <div class="section-title">
+              <strong>밀키트 / 완제품</strong>
+              <span>제품명을 입력하고 추가하면 식단 후보로 들어갑니다.</span>
+            </div>
+            <div class="chip-input-row">
+              <input
+                id="mealKitInput"
+                class="meal-kit-chip-input"
+                type="text"
+                placeholder="예: 컬리 사골떡만둣국"
+              />
+              <button id="addMealKitButton" class="add-chip-button" type="button">추가</button>
+            </div>
+            <div id="mealKitChips" class="chip-list" aria-label="밀키트 완제품 목록"></div>
+            <textarea id="mealKits" class="legacy-ingredients" rows="4" hidden></textarea>
+          </section>
 
           <div class="form-grid">
             <label>
@@ -116,6 +166,67 @@
               <span id="dinnerEaseValue">40%</span>
             </label>
             <input id="dinnerEase" type="range" min="0" max="100" step="10" value="40" />
+          </section>
+
+          <section class="category-ratio-card" aria-label="카테고리 비중">
+            <div class="ratio-header">
+              <strong>카테고리 비중</strong>
+              <span>비중이 높은 카테고리일수록 일주일 식단에 더 자주 반영됩니다.</span>
+            </div>
+            <label class="toggle-label">
+              <input id="randomCategoryMode" type="checkbox" />
+              완전 랜덤으로 짜기
+            </label>
+            <div class="category-ratio-grid">
+              <label class="range-label" for="koreanRatio">한식 <span id="koreanRatioValue">50%</span></label>
+              <input id="koreanRatio" class="category-ratio-input" data-category="한식" type="range" min="0" max="100" step="10" value="50" />
+              <label class="range-label" for="westernRatio">양식 <span id="westernRatioValue">20%</span></label>
+              <input id="westernRatio" class="category-ratio-input" data-category="양식" type="range" min="0" max="100" step="10" value="20" />
+              <label class="range-label" for="japaneseRatio">일식 <span id="japaneseRatioValue">10%</span></label>
+              <input id="japaneseRatio" class="category-ratio-input" data-category="일식" type="range" min="0" max="100" step="10" value="10" />
+              <label class="range-label" for="chineseRatio">중식 <span id="chineseRatioValue">10%</span></label>
+              <input id="chineseRatio" class="category-ratio-input" data-category="중식" type="range" min="0" max="100" step="10" value="10" />
+              <label class="range-label" for="otherRatio">기타 <span id="otherRatioValue">10%</span></label>
+              <input id="otherRatio" class="category-ratio-input" data-category="기타" type="range" min="0" max="100" step="10" value="10" />
+            </div>
+          </section>
+
+          <section class="custom-recipe-card" aria-label="내 레시피 관리">
+            <div class="section-title">
+              <strong>내 레시피</strong>
+              <span>직접 만든 레시피를 식단 후보에 추가하고 수정/삭제할 수 있습니다.</span>
+            </div>
+            <div class="custom-recipe-grid">
+              <input id="customRecipeName" type="text" placeholder="레시피 이름" />
+              <input id="customRecipeCategory" type="text" placeholder="카테고리 예: 한식/찌개" />
+              <input id="customRecipeIngredients" type="text" placeholder="주요 재료 예: 김치, 돼지고기, 두부" />
+              <select id="customRecipeMeal">
+                <option value="both">점심/저녁 모두</option>
+                <option value="lunch">점심</option>
+                <option value="dinner">저녁</option>
+              </select>
+            </div>
+            <button id="saveCustomRecipeButton" class="secondary-button" type="button">내 레시피 추가</button>
+            <div id="customRecipeList" class="custom-recipe-list"></div>
+          </section>
+
+          <section class="recipe-manager-card" aria-label="전체 레시피 관리">
+            <div class="section-title">
+              <strong>전체 레시피 관리</strong>
+              <span>기본 레시피를 검색하고 식단 후보에서 빼거나 다시 복구할 수 있습니다.</span>
+            </div>
+            <select id="recipeCuisineFilter">
+              <option value="all">전체 카테고리</option>
+              <option value="한식">한식</option>
+              <option value="양식">양식</option>
+              <option value="일식">일식</option>
+              <option value="중식">중식</option>
+              <option value="기타">기타</option>
+            </select>
+            <input id="recipeSearchInput" type="search" placeholder="레시피명, 카테고리, 재료 검색" />
+            <p id="recipeManagerSummary" class="recipe-manager-summary">레시피 데이터를 불러오는 중입니다.</p>
+            <div id="recipeManagerList" class="recipe-manager-list"></div>
+            <button id="recipeLoadMoreButton" class="ghost-button" type="button" hidden>레시피 더 보기</button>
           </section>
 
           <button type="submit">두 끼 식단 만들기</button>

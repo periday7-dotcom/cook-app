@@ -35,40 +35,260 @@ const fallbackByMeal = {
 };
 
 const priceBook = {
-  대파: 1500,
-  양파: 1200,
-  버섯: 2500,
-  된장: 3500,
-  파프리카: 2500,
-  브로콜리: 3500,
-  우유: 2500,
-  치즈: 3500,
-  토마토: 3500,
-  소고기: 9000,
-  숙주: 1500,
-  고등어: 5000,
-  무: 2500,
-  고추장: 3500,
-  돼지고기: 6500,
-  새우: 8000,
-  마늘: 2000,
-  닭고기: 6500,
-  감자: 3000,
-  당근: 2000,
-  햄: 3500,
-  콩나물: 1500,
-  연어: 11000,
-  아보카도: 3000,
-  가지: 2500,
-  상추: 2500,
-  불고기: 8500,
-  어묵: 3500,
-  우동면: 2500,
-  양배추: 3500,
-  소면: 3000,
-  채소: 4000,
-  단백질: 6000
+  대파: 3200,
+  쪽파: 3500,
+  부추: 2500,
+  양파: 4500,
+  감자: 5500,
+  당근: 3800,
+  무: 2800,
+  배추: 6500,
+  양배추: 4200,
+  애호박: 2200,
+  오이: 3500,
+  가지: 3000,
+  상추: 3500,
+  깻잎: 2200,
+  시금치: 3500,
+  숙주: 1800,
+  콩나물: 1800,
+  미나리: 3500,
+  버섯: 3500,
+  표고버섯: 4500,
+  팽이버섯: 1800,
+  느타리버섯: 2500,
+  새송이버섯: 3000,
+  브로콜리: 4500,
+  파프리카: 5500,
+  토마토: 6500,
+  마늘: 4500,
+  청양고추: 2500,
+  풋고추: 2500,
+  꽈리고추: 3500,
+  고구마: 6500,
+  단호박: 4500,
+  연근: 4500,
+  우엉: 3500,
+  고사리: 5000,
+  도라지: 4500,
+  냉이: 3500,
+  아욱: 3000,
+  근대: 3000,
+  시래기: 4500,
+  우거지: 3500,
+  김치: 12000,
+  열무김치: 9000,
+  깍두기: 7000,
+  두부: 2500,
+  순두부: 1800,
+  콩비지: 2500,
+  달걀: 7500,
+  삶은달걀: 3500,
+  메추리알: 4500,
+  우유: 3500,
+  치즈: 6500,
+  버터: 8000,
+  마요네즈: 4500,
+  참치: 3500,
+  참치캔: 3500,
+  스팸: 5500,
+  햄: 4500,
+  소시지: 5500,
+  어묵: 4000,
+  만두: 6500,
+  김치만두: 7500,
+  군만두: 6500,
+  떡: 3500,
+  떡볶이떡: 3500,
+  소고기: 13000,
+  양지: 15000,
+  차돌박이: 13000,
+  다진소고기: 11000,
+  "다진 소고기": 11000,
+  소갈비: 30000,
+  LA갈비: 28000,
+  소불고기: 13000,
+  돼지고기: 8500,
+  삼겹살: 13000,
+  목살: 12000,
+  돼지갈비: 12000,
+  돼지등뼈: 8000,
+  곱창: 12000,
+  닭: 9000,
+  닭고기: 9000,
+  닭봉: 9500,
+  닭가슴살: 8500,
+  불고기: 12000,
+  단백질: 8000,
+  새우: 10000,
+  오징어: 7000,
+  오징어채: 7000,
+  오징어실채: 6500,
+  낙지: 11000,
+  주꾸미: 9000,
+  바지락: 5500,
+  조개: 6000,
+  홍합: 5500,
+  굴: 8500,
+  꼬막: 9000,
+  골뱅이: 7000,
+  전복: 18000,
+  꽃게: 14000,
+  아귀: 12000,
+  생선: 9000,
+  고등어: 7000,
+  갈치: 13000,
+  코다리: 9000,
+  동태: 7000,
+  동태포: 7000,
+  대구: 11000,
+  가자미: 8500,
+  삼치: 8500,
+  조기: 10000,
+  병어: 12000,
+  꽁치: 5000,
+  명태알: 7000,
+  황태: 7000,
+  황태채: 7000,
+  북어채: 6500,
+  멸치: 6000,
+  잔멸치: 6000,
+  마른새우: 5000,
+  미역: 4500,
+  다시마육수: 4000,
+  멸치육수: 4000,
+  사골육수: 4000,
+  냉면육수: 3500,
+  육수: 4000,
+  사골: 9000,
+  쌀: 12000,
+  밥: 3000,
+  소면: 3500,
+  중면: 3500,
+  칼국수면: 3500,
+  우동면: 3500,
+  냉면사리: 3500,
+  쫄면사리: 3500,
+  메밀면: 4500,
+  파스타면: 3500,
+  라면사리: 2500,
+  당면: 4500,
+  밀가루: 3500,
+  부침가루: 3500,
+  찹쌀가루: 4500,
+  찹쌀: 6500,
+  밀가루반죽: 3500,
+  수제비반죽: 3500,
+  만두피: 3500,
+  고추장: 6500,
+  된장: 6500,
+  청국장: 3500,
+  간장: 4500,
+  국간장: 4500,
+  고춧가루: 11000,
+  참기름: 7500,
+  들기름: 8500,
+  식용유: 7000,
+  고추기름: 5500,
+  식초: 3000,
+  설탕: 3500,
+  올리고당: 4500,
+  물엿: 4000,
+  꿀: 9000,
+  소금: 2500,
+  깨: 5000,
+  참깨: 5000,
+  검은깨: 5500,
+  들깨가루: 7000,
+  들깨: 6500,
+  양념장: 3500,
+  양념간장: 3000,
+  간장양념: 3000,
+  고추장양념: 3500,
+  간장소스: 3500,
+  케첩소스: 3500,
+  단무지: 3500,
+  김: 5000,
+  김가루: 4000,
+  도토리묵: 3000,
+  팥: 6000,
+  녹두: 7000,
+  검은콩: 7000,
+  땅콩: 6000,
+  견과류: 9000,
+  밤: 7000,
+  대추: 5000,
+  인삼: 12000,
+  은행: 5000,
+  배: 4500,
+  레몬: 4500,
+  아보카도: 5000,
+  채소: 5000,
+  해물: 12000,
+  "해물 선택": 12000,
+  "참치 또는 멸치": 6000,
+  Chicken: 9000,
+  Beef: 13000,
+  Pork: 8500,
+  Fish: 9000,
+  Clam: 6000,
+  Tuna: 3500,
+  Tomato: 6500,
+  Mushroom: 3500,
+  Pasta: 3500,
+  Spaghetti: 3500,
+  Parmesan: 7500,
+  Cheese: 6500,
+  Basil: 3500
 };
+
+const nonPurchasableTags = new Set([
+  "간편",
+  "매운",
+  "집밥",
+  "원팬",
+  "and",
+  "Alfredo",
+  "Bolognese",
+  "Lasagna",
+  "Stroganoff",
+  "Margherita",
+  "Pizza",
+  "Caesar",
+  "Salad",
+  "Minestrone",
+  "Soup",
+  "Chowder",
+  "French",
+  "Onion",
+  "Stew",
+  "Roast",
+  "Shepherds",
+  "Pie",
+  "Chips",
+  "Mac",
+  "Carbonara",
+  "Pesto",
+  "Risotto",
+  "Pot",
+  "Turkey",
+  "Meatballs",
+  "BBQ",
+  "Pulled",
+  "Greek",
+  "Cobb",
+  "Ratatouille",
+  "Quiche",
+  "Lorraine",
+  "Frittata",
+  "Schnitzel",
+  "Piccata",
+  "Burger",
+  "Club",
+  "Sandwich",
+  "Melt",
+  "Teriyaki"
+]);
 
 const knownIngredients = [
   "김치",
@@ -196,6 +416,17 @@ const cookingMinutesByTitle = {
 const form = document.querySelector("#plannerForm");
 const ingredientsInput = document.querySelector("#ingredients");
 const mealKitsInput = document.querySelector("#mealKits");
+const mealKitChipInput = document.querySelector("#mealKitInput");
+const addMealKitButton = document.querySelector("#addMealKitButton");
+const mealKitChips = document.querySelector("#mealKitChips");
+const ingredientChipInputs = document.querySelectorAll(".ingredient-chip-input");
+const addChipButtons = document.querySelectorAll(".add-chip-button");
+const chipLists = {
+  cold: document.querySelector("#coldChips"),
+  frozen: document.querySelector("#frozenChips"),
+  room: document.querySelector("#roomChips"),
+  seasoning: document.querySelector("#seasoningChips")
+};
 const avoidInput = document.querySelector("#avoid");
 const styleInput = document.querySelector("#style");
 const startDateInput = document.querySelector("#startDate");
@@ -203,6 +434,8 @@ const lunchEaseInput = document.querySelector("#lunchEase");
 const dinnerEaseInput = document.querySelector("#dinnerEase");
 const lunchEaseValue = document.querySelector("#lunchEaseValue");
 const dinnerEaseValue = document.querySelector("#dinnerEaseValue");
+const categoryRatioInputs = document.querySelectorAll(".category-ratio-input");
+const randomCategoryModeInput = document.querySelector("#randomCategoryMode");
 const alternatePlanButton = document.querySelector("#alternatePlanButton");
 const calendarButton = document.querySelector("#calendarButton");
 const sampleButton = document.querySelector("#sampleButton");
@@ -216,14 +449,50 @@ const ocrText = document.querySelector("#ocrText");
 const applyOcrTextButton = document.querySelector("#applyOcrTextButton");
 const installButton = document.querySelector("#installButton");
 const desktopInstallButton = document.querySelector("#desktopInstallButton");
+const customRecipeNameInput = document.querySelector("#customRecipeName");
+const customRecipeCategoryInput = document.querySelector("#customRecipeCategory");
+const customRecipeIngredientsInput = document.querySelector("#customRecipeIngredients");
+const customRecipeMealInput = document.querySelector("#customRecipeMeal");
+const saveCustomRecipeButton = document.querySelector("#saveCustomRecipeButton");
+const customRecipeList = document.querySelector("#customRecipeList");
+const recipeSearchInput = document.querySelector("#recipeSearchInput");
+const recipeCuisineFilter = document.querySelector("#recipeCuisineFilter");
+const recipeManagerSummary = document.querySelector("#recipeManagerSummary");
+const recipeManagerList = document.querySelector("#recipeManagerList");
+const recipeLoadMoreButton = document.querySelector("#recipeLoadMoreButton");
 
 let selectedPhoto = null;
 let deferredInstallPrompt = null;
 let variationSeed = 0;
 let lastPlan = null;
 let lastIngredients = [];
+let editingRecipeId = null;
+let storedIngredients = loadStoredIngredients();
+let storedMealKits = loadStoredMealKits();
+let customRecipes = loadCustomRecipes();
+let seedRecipes = [...recipes];
+let recipeOverrides = loadRecipeOverrides();
+let deletedRecipeIds = loadDeletedRecipeIds();
+let recipeDataLoadStatus = "loading";
+let recipeManagerVisibleCount = 120;
 
 startDateInput.value = getTodayInputValue();
+renderIngredientChips();
+renderMealKitChips();
+renderCustomRecipes();
+loadSeedRecipes();
+recipeSearchInput?.addEventListener("input", () => {
+  recipeManagerVisibleCount = 120;
+  renderRecipeManager();
+});
+recipeCuisineFilter?.addEventListener("change", () => {
+  recipeManagerVisibleCount = 120;
+  renderRecipeManager();
+});
+recipeLoadMoreButton?.addEventListener("click", () => {
+  recipeManagerVisibleCount += 120;
+  renderRecipeManager();
+});
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
@@ -252,6 +521,36 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
 });
 
 updateEaseLabels();
+updateCategoryRatioLabels();
+
+addChipButtons.forEach((button) => {
+  button.addEventListener("click", () => addIngredientChip(button.dataset.target));
+});
+
+ingredientChipInputs.forEach((input) => {
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const storage = input.closest(".storage-box")?.dataset.storage;
+      addIngredientChip(storage);
+    }
+  });
+});
+
+addMealKitButton?.addEventListener("click", addMealKitChip);
+
+mealKitChipInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addMealKitChip();
+  }
+});
+
+categoryRatioInputs.forEach((input) => {
+  input.addEventListener("input", updateCategoryRatioLabels);
+});
+
+randomCategoryModeInput?.addEventListener("change", updateCategoryRatioLabels);
 
 function showInstallButtons() {
   installButton.hidden = false;
@@ -329,13 +628,25 @@ applyOcrTextButton.addEventListener("click", () => {
 });
 
 sampleButton.addEventListener("click", () => {
-  ingredientsInput.value = "닭가슴살, 달걀, 두부, 애호박, 양파, 김치, 밥, 파스타면, 버섯, 오이, 참치";
-  mealKitsInput.value = "컬리 사골떡만둣국, 비마트 닭갈비 밀키트";
+  storedIngredients = {
+    cold: ["달걀", "두부", "애호박", "양파", "김치", "오이"],
+    frozen: ["닭가슴살"],
+    room: ["밥", "파스타면", "참치"],
+    seasoning: ["고추장", "간장"]
+  };
+  saveStoredIngredients();
+  renderIngredientChips();
+  storedMealKits = ["컬리 사골떡만둣국", "비마트 닭갈비 밀키트"];
+  saveStoredMealKits();
+  renderMealKitChips();
   avoidInput.value = "너무 매운맛";
   styleInput.value = "balanced";
   lunchEaseInput.value = "70";
   dinnerEaseInput.value = "40";
+  setCategoryRatios({ 한식: 50, 양식: 20, 일식: 10, 중식: 10, 기타: 10 });
+  if (randomCategoryModeInput) randomCategoryModeInput.checked = false;
   updateEaseLabels();
+  updateCategoryRatioLabels();
   form.requestSubmit();
 });
 
@@ -351,8 +662,8 @@ calendarButton.addEventListener("click", () => {
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
-  const ingredients = parseList(ingredientsInput.value);
-  const mealKits = parseList(mealKitsInput.value);
+  const ingredients = getAllStoredIngredients();
+  const mealKits = storedMealKits;
   const avoid = parseList(avoidInput.value);
 
   if (ingredients.length === 0 && mealKits.length === 0) {
@@ -363,7 +674,8 @@ form.addEventListener("submit", (event) => {
   }
 
   const difficultyPreferences = getDifficultyPreferences();
-  const plan = buildPlan(ingredients, mealKits, avoid, styleInput.value, difficultyPreferences);
+  const categoryPreferences = getCategoryPreferences();
+  const plan = buildPlan(ingredients, mealKits, avoid, styleInput.value, difficultyPreferences, categoryPreferences);
   lastPlan = plan;
   lastIngredients = ingredients;
   alternatePlanButton.disabled = false;
@@ -383,6 +695,34 @@ function getDifficultyPreferences() {
   };
 }
 
+function updateCategoryRatioLabels() {
+  categoryRatioInputs.forEach((input) => {
+    const valueLabel = document.querySelector(`#${input.id}Value`);
+    if (valueLabel) valueLabel.textContent = `${input.value}%`;
+    input.disabled = Boolean(randomCategoryModeInput?.checked);
+  });
+}
+
+function getCategoryPreferences() {
+  const weights = {};
+  categoryRatioInputs.forEach((input) => {
+    weights[input.dataset.category] = Number(input.value);
+  });
+
+  return {
+    random: Boolean(randomCategoryModeInput?.checked),
+    weights
+  };
+}
+
+function setCategoryRatios(weights) {
+  categoryRatioInputs.forEach((input) => {
+    if (weights[input.dataset.category] !== undefined) {
+      input.value = String(weights[input.dataset.category]);
+    }
+  });
+}
+
 function getTodayInputValue() {
   const today = new Date();
   const offsetDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000);
@@ -393,6 +733,391 @@ function getSelectedStartDate() {
   if (!startDateInput.value) return new Date();
   const [year, month, day] = startDateInput.value.split("-").map(Number);
   return new Date(year, month - 1, day);
+}
+
+function loadStoredIngredients() {
+  const empty = { cold: [], frozen: [], room: [], seasoning: [] };
+  try {
+    return { ...empty, ...JSON.parse(localStorage.getItem("storedIngredients") || "{}") };
+  } catch {
+    return empty;
+  }
+}
+
+function saveStoredIngredients() {
+  localStorage.setItem("storedIngredients", JSON.stringify(storedIngredients));
+  ingredientsInput.value = getAllStoredIngredients().join(", ");
+}
+
+function getAllStoredIngredients() {
+  return Object.values(storedIngredients).flat().filter(Boolean);
+}
+
+function addIngredientChip(storage) {
+  if (!storage || !storedIngredients[storage]) return;
+  const box = document.querySelector(`.storage-box[data-storage="${storage}"]`);
+  const input = box?.querySelector(".ingredient-chip-input");
+  const values = parseList(input?.value || "");
+  const known = new Set(storedIngredients[storage].map(normalize));
+
+  values.forEach((value) => {
+    if (!known.has(normalize(value))) {
+      storedIngredients[storage].push(value);
+      known.add(normalize(value));
+    }
+  });
+
+  if (input) input.value = "";
+  saveStoredIngredients();
+  renderIngredientChips();
+}
+
+function removeIngredientChip(storage, ingredient) {
+  storedIngredients[storage] = storedIngredients[storage].filter((item) => normalize(item) !== normalize(ingredient));
+  saveStoredIngredients();
+  renderIngredientChips();
+}
+
+function renderIngredientChips() {
+  Object.entries(chipLists).forEach(([storage, container]) => {
+    if (!container) return;
+    const items = storedIngredients[storage] || [];
+    container.innerHTML = items.length
+      ? items
+          .map(
+            (item) => `
+              <button class="ingredient-chip" type="button" data-storage="${storage}" data-ingredient="${item}" title="눌러서 삭제">
+                ${item}<span aria-hidden="true">×</span>
+              </button>
+            `
+          )
+          .join("")
+      : `<span class="empty-chip">아직 없음</span>`;
+  });
+
+  document.querySelectorAll(".ingredient-chip[data-storage]").forEach((chip) => {
+    chip.addEventListener("click", () => removeIngredientChip(chip.dataset.storage, chip.dataset.ingredient));
+  });
+  ingredientsInput.value = getAllStoredIngredients().join(", ");
+}
+
+function loadStoredMealKits() {
+  try {
+    return JSON.parse(localStorage.getItem("storedMealKits") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredMealKits() {
+  localStorage.setItem("storedMealKits", JSON.stringify(storedMealKits));
+  mealKitsInput.value = storedMealKits.join(", ");
+}
+
+function addMealKitChip() {
+  const values = parseList(mealKitChipInput?.value || "");
+  const known = new Set(storedMealKits.map(normalize));
+
+  values.forEach((value) => {
+    if (!known.has(normalize(value))) {
+      storedMealKits.push(value);
+      known.add(normalize(value));
+    }
+  });
+
+  if (mealKitChipInput) mealKitChipInput.value = "";
+  saveStoredMealKits();
+  renderMealKitChips();
+}
+
+function removeMealKitChip(mealKit) {
+  storedMealKits = storedMealKits.filter((item) => normalize(item) !== normalize(mealKit));
+  saveStoredMealKits();
+  renderMealKitChips();
+}
+
+function renderMealKitChips() {
+  if (!mealKitChips) return;
+  mealKitChips.innerHTML = storedMealKits.length
+    ? storedMealKits
+        .map(
+          (item) => `
+            <button class="ingredient-chip meal-kit-chip" type="button" data-meal-kit="${item}" title="눌러서 삭제">
+              ${item}<span aria-hidden="true">×</span>
+            </button>
+          `
+        )
+        .join("")
+    : `<span class="empty-chip">아직 없음</span>`;
+
+  mealKitChips.querySelectorAll(".meal-kit-chip").forEach((chip) => {
+    chip.addEventListener("click", () => removeMealKitChip(chip.dataset.mealKit));
+  });
+  mealKitsInput.value = storedMealKits.join(", ");
+}
+
+function loadCustomRecipes() {
+  try {
+    return JSON.parse(localStorage.getItem("customRecipes") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomRecipes() {
+  localStorage.setItem("customRecipes", JSON.stringify(customRecipes));
+}
+
+saveCustomRecipeButton.addEventListener("click", () => {
+  const title = customRecipeNameInput.value.trim();
+  const category = customRecipeCategoryInput.value.trim() || "내 레시피";
+  const tags = parseList(customRecipeIngredientsInput.value);
+  const mealValue = customRecipeMealInput.value;
+
+  if (!title || tags.length === 0) {
+    customRecipeNameInput.focus();
+    return;
+  }
+
+  if (editingRecipeId?.startsWith("override:")) {
+    const seedId = editingRecipeId.replace("override:", "");
+    const meal = mealValue === "both" ? ["lunch", "dinner"] : [mealValue];
+    recipeOverrides[seedId] = {
+      title,
+      category,
+      tags,
+      meal,
+      type: "balanced"
+    };
+    editingRecipeId = null;
+    saveRecipeOverrides();
+    renderRecipeManager();
+    clearCustomRecipeForm();
+    return;
+  }
+
+  const recipe = {
+    id: editingRecipeId || `custom-${Date.now()}`,
+    title,
+    category,
+    tags,
+    type: "balanced",
+    meal: mealValue === "both" ? ["lunch", "dinner"] : [mealValue],
+    isCustom: true
+  };
+
+  if (editingRecipeId) {
+    customRecipes = customRecipes.map((item) => (item.id === editingRecipeId ? recipe : item));
+  } else {
+    customRecipes.push(recipe);
+  }
+
+  editingRecipeId = null;
+  saveCustomRecipes();
+  renderCustomRecipes();
+  clearCustomRecipeForm();
+});
+
+function renderCustomRecipes() {
+  if (!customRecipeList) return;
+  customRecipeList.innerHTML = customRecipes.length
+    ? customRecipes
+        .map(
+          (recipe) => `
+            <article class="custom-recipe-item">
+              <div>
+                <strong>${recipe.title}</strong>
+                <span>${recipe.category} · ${recipe.tags.join(", ")}</span>
+              </div>
+              <div class="custom-recipe-actions">
+                <button type="button" data-action="edit" data-id="${recipe.id}">수정</button>
+                <button type="button" data-action="delete" data-id="${recipe.id}">삭제</button>
+              </div>
+            </article>
+          `
+        )
+        .join("")
+    : `<p class="empty-custom-recipes">아직 등록한 레시피가 없습니다.</p>`;
+
+  customRecipeList.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const recipe = customRecipes.find((item) => item.id === button.dataset.id);
+      if (!recipe) return;
+      if (button.dataset.action === "delete") {
+        customRecipes = customRecipes.filter((item) => item.id !== recipe.id);
+        saveCustomRecipes();
+        renderCustomRecipes();
+        return;
+      }
+      editingRecipeId = recipe.id;
+      customRecipeNameInput.value = recipe.title;
+      customRecipeCategoryInput.value = recipe.category;
+      customRecipeIngredientsInput.value = recipe.tags.join(", ");
+      customRecipeMealInput.value = recipe.meal.length > 1 ? "both" : recipe.meal[0];
+      saveCustomRecipeButton.textContent = "내 레시피 수정 완료";
+    });
+  });
+}
+
+function clearCustomRecipeForm() {
+  customRecipeNameInput.value = "";
+  customRecipeCategoryInput.value = "";
+  customRecipeIngredientsInput.value = "";
+  customRecipeMealInput.value = "both";
+  saveCustomRecipeButton.textContent = "내 레시피 추가";
+}
+
+async function loadSeedRecipes() {
+  try {
+    const data = Array.isArray(window.RECIPE_DATA) ? window.RECIPE_DATA : await fetchRecipeData();
+    seedRecipes = data.map((recipe) => ({
+      ...recipe,
+      isSeed: true
+    }));
+    recipeDataLoadStatus = "loaded";
+  } catch {
+    recipeDataLoadStatus = "fallback";
+    seedRecipes = recipes.map((recipe, index) => ({
+      ...recipe,
+      id: `legacy-${index}`,
+      cuisine: "한식",
+      category: getRecipeCategory(recipe),
+      isSeed: true
+    }));
+  }
+  renderRecipeManager();
+}
+
+async function fetchRecipeData() {
+  const response = await fetch("./recipes-data.json", { cache: "no-cache" });
+  if (!response.ok) throw new Error("recipes-data.json not found");
+  return response.json();
+}
+
+function loadRecipeOverrides() {
+  try {
+    return JSON.parse(localStorage.getItem("recipeOverrides") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveRecipeOverrides() {
+  localStorage.setItem("recipeOverrides", JSON.stringify(recipeOverrides));
+}
+
+function loadDeletedRecipeIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem("deletedRecipeIds") || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDeletedRecipeIds() {
+  localStorage.setItem("deletedRecipeIds", JSON.stringify([...deletedRecipeIds]));
+}
+
+function getSeedRecipePool() {
+  return seedRecipes
+    .filter((recipe) => !deletedRecipeIds.has(recipe.id))
+    .map((recipe) => ({ ...recipe, ...(recipeOverrides[recipe.id] || {}) }));
+}
+
+function getAllRecipePool() {
+  return [...customRecipes, ...getSeedRecipePool()];
+}
+
+function renderRecipeManager() {
+  if (!recipeManagerList) return;
+  const query = normalize(recipeSearchInput?.value || "");
+  const cuisineFilter = recipeCuisineFilter?.value || "all";
+  updateRecipeCuisineOptions();
+  const filteredRecipes = seedRecipes.filter((recipe) => {
+      if (cuisineFilter !== "all" && recipe.cuisine !== cuisineFilter) return false;
+      if (!query) return true;
+      return normalize([recipe.title, recipe.category, recipe.cuisine, ...(recipe.tags || [])].join(" ")).includes(query);
+    });
+  const candidates = filteredRecipes.slice(0, recipeManagerVisibleCount);
+  const activeCount = getSeedRecipePool().length;
+
+  if (recipeManagerSummary) {
+    const loadText =
+      recipeDataLoadStatus === "loaded"
+        ? `전체 ${seedRecipes.length}개 로드됨`
+        : `큰 레시피 파일을 못 불러와서 기본 ${seedRecipes.length}개만 표시 중`;
+    recipeManagerSummary.textContent = `${loadText} · 현재 조건 ${filteredRecipes.length}개 중 ${candidates.length}개 표시 · 식단 후보 ${activeCount}개`;
+  }
+
+  if (recipeLoadMoreButton) {
+    recipeLoadMoreButton.hidden = candidates.length >= filteredRecipes.length;
+    recipeLoadMoreButton.textContent = `레시피 더 보기 (${filteredRecipes.length - candidates.length}개 남음)`;
+  }
+
+  recipeManagerList.innerHTML = candidates.length
+    ? candidates
+        .map((recipe) => {
+          const overridden = recipeOverrides[recipe.id] || {};
+          const displayRecipe = { ...recipe, ...overridden };
+          const deleted = deletedRecipeIds.has(recipe.id);
+          return `
+            <article class="recipe-manager-item ${deleted ? "is-disabled" : ""}">
+              <div>
+                <strong>${displayRecipe.title}</strong>
+                <span>${displayRecipe.cuisine || "한식"} · ${displayRecipe.category || "기본"} · ${(displayRecipe.tags || []).slice(0, 5).join(", ")}</span>
+              </div>
+              <div class="recipe-manager-actions">
+                <button type="button" data-action="edit-seed" data-id="${recipe.id}">수정</button>
+                <button type="button" data-action="${deleted ? "restore-seed" : "delete-seed"}" data-id="${recipe.id}">
+                  ${deleted ? "복구" : "삭제"}
+                </button>
+              </div>
+            </article>
+          `;
+        })
+        .join("")
+    : `<p class="empty-custom-recipes">검색 결과가 없습니다.</p>`;
+
+  recipeManagerList.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const recipe = seedRecipes.find((item) => item.id === button.dataset.id);
+      if (!recipe) return;
+      if (button.dataset.action === "delete-seed") {
+        deletedRecipeIds.add(recipe.id);
+        saveDeletedRecipeIds();
+        renderRecipeManager();
+        return;
+      }
+      if (button.dataset.action === "restore-seed") {
+        deletedRecipeIds.delete(recipe.id);
+        saveDeletedRecipeIds();
+        renderRecipeManager();
+        return;
+      }
+      const current = { ...recipe, ...(recipeOverrides[recipe.id] || {}) };
+      customRecipeNameInput.value = current.title;
+      customRecipeCategoryInput.value = current.category || "한식";
+      customRecipeIngredientsInput.value = (current.tags || []).join(", ");
+      customRecipeMealInput.value = current.meal?.length > 1 ? "both" : current.meal?.[0] || "both";
+      editingRecipeId = `override:${recipe.id}`;
+      saveCustomRecipeButton.textContent = "기본 레시피 수정 저장";
+    });
+  });
+}
+
+function updateRecipeCuisineOptions() {
+  if (!recipeCuisineFilter) return;
+  const currentValue = recipeCuisineFilter.value;
+  const counts = seedRecipes.reduce((acc, recipe) => {
+    acc[recipe.cuisine] = (acc[recipe.cuisine] || 0) + 1;
+    return acc;
+  }, {});
+  const labels = ["한식", "양식", "일식", "중식", "기타"];
+  recipeCuisineFilter.innerHTML = [
+    `<option value="all">전체 카테고리 (${seedRecipes.length})</option>`,
+    ...labels.map((label) => `<option value="${label}">${label} (${counts[label] || 0})</option>`)
+  ].join("");
+  recipeCuisineFilter.value = [...labels, "all"].includes(currentValue) ? currentValue : "all";
 }
 
 function parseList(value) {
@@ -476,18 +1201,18 @@ function loadImage(file) {
 }
 
 function mergeIngredients(newIngredients) {
-  const current = parseList(ingredientsInput.value);
+  const current = getAllStoredIngredients();
   const known = new Set(current.map(normalize));
-  const merged = [...current];
 
   newIngredients.forEach((ingredient) => {
     if (!known.has(normalize(ingredient))) {
-      merged.push(ingredient);
+      storedIngredients.cold.push(ingredient);
       known.add(normalize(ingredient));
     }
   });
 
-  ingredientsInput.value = merged.join(", ");
+  saveStoredIngredients();
+  renderIngredientChips();
 }
 
 function setOcrStatus(message, isError = false) {
@@ -495,10 +1220,10 @@ function setOcrStatus(message, isError = false) {
   ocrStatus.classList.toggle("is-error", isError);
 }
 
-function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences) {
+function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences, categoryPreferences) {
   const usedTitles = new Set();
   const normalizedAvoid = avoid.map(normalize);
-  const recipePool = [...createMealKitRecipes(mealKits), ...recipes];
+  const recipePool = [...createMealKitRecipes(mealKits), ...getAllRecipePool()];
 
   return days.map((day, dayIndex) => {
     const menu = meals.map(([mealKey, mealLabel], mealIndex) => {
@@ -508,7 +1233,15 @@ function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences) {
         .filter((recipe) => !normalizedAvoid.some((item) => normalize(recipe.title).includes(item)))
         .map((recipe) => ({
           ...recipe,
-          score: scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, difficultyPreferences[mealKey])
+          score: scoreRecipe(
+            recipe,
+            ingredients,
+            style,
+            dayIndex,
+            mealIndex,
+            difficultyPreferences[mealKey],
+            categoryPreferences
+          )
         }))
         .sort((a, b) => b.score - a.score);
 
@@ -517,10 +1250,10 @@ function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences) {
 
       const matched = selected.isMealKit
         ? ["밀키트/완제품"]
-        : selected.tags.filter((tag) => includesIngredient(ingredients, tag));
+        : selected.tags.filter((tag) => isPurchasableIngredient(tag) && includesIngredient(ingredients, tag));
       const missing = selected.isMealKit
         ? []
-        : selected.tags.filter((tag) => !includesIngredient(ingredients, tag));
+        : selected.tags.filter((tag) => isPurchasableIngredient(tag) && !includesIngredient(ingredients, tag));
 
       return {
         mealKey,
@@ -528,6 +1261,7 @@ function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences) {
         ...selected,
         difficulty: selected.isMealKit ? 1 : getDifficulty(selected.title),
         cookingMinutes: selected.isMealKit ? 15 : getCookingMinutes(selected.title),
+        category: getRecipeCategory(selected),
         matched,
         missing,
         estimatedBudget: estimateBudget(missing)
@@ -542,13 +1276,15 @@ function createMealKitRecipes(mealKits) {
   return mealKits.map((title, index) => ({
     title,
     type: "quick",
+    category: "밀키트/완제품",
+    cuisine: "기타",
     tags: [],
     meal: index % 2 === 0 ? ["dinner", "lunch"] : ["lunch", "dinner"],
     isMealKit: true
   }));
 }
 
-function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePreference) {
+function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePreference, categoryPreferences) {
   const matchScore = recipe.tags.reduce((score, tag) => {
     return score + (includesIngredient(ingredients, tag) ? 8 : 0);
   }, 0);
@@ -559,7 +1295,32 @@ function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePrefer
   const targetDifficulty = easeToDifficulty(easePreference);
   const difficultyDistance = Math.abs((recipe.isMealKit ? 1 : getDifficulty(recipe.title)) - targetDifficulty);
   const difficultyScore = 8 - difficultyDistance * 5;
-  return matchScore + styleScore + varietyScore + difficultyScore + mealKitScore;
+  const categoryScore = getCategoryScore(recipe, categoryPreferences, dayIndex, mealIndex);
+  return matchScore + styleScore + varietyScore + difficultyScore + mealKitScore + categoryScore;
+}
+
+function getCategoryScore(recipe, categoryPreferences, dayIndex, mealIndex) {
+  if (!categoryPreferences) return 0;
+
+  if (categoryPreferences.random) {
+    return ((recipe.title.length * 3 + dayIndex * 11 + mealIndex * 7 + variationSeed * 13) % 24) - 6;
+  }
+
+  const category = getCuisineBucket(recipe);
+  const weights = categoryPreferences.weights || {};
+  const total = Object.values(weights).reduce((sum, value) => sum + Number(value || 0), 0);
+  if (!total) return 0;
+  const ratio = Number(weights[category] || 0) / total;
+  return Math.round(ratio * 36);
+}
+
+function getCuisineBucket(recipe) {
+  const value = recipe.cuisine || recipe.category || getRecipeCategory(recipe);
+  if (value.includes("한식")) return "한식";
+  if (value.includes("양식") || value.includes("서양")) return "양식";
+  if (value.includes("일식") || value.includes("일본")) return "일식";
+  if (value.includes("중식") || value.includes("중국")) return "중식";
+  return "기타";
 }
 
 function easeToDifficulty(easePreference) {
@@ -578,6 +1339,15 @@ function getDifficultyLabel(difficulty) {
   return "도전";
 }
 
+function getRecipeCategory(recipe) {
+  if (recipe.category) return recipe.category;
+  if (recipe.isMealKit) return "밀키트/완제품";
+  if (recipe.type === "korean") return "한식";
+  if (recipe.type === "healthy") return "건강식";
+  if (recipe.type === "quick") return "간편식";
+  return "균형식";
+}
+
 function getCookingMinutes(title) {
   return cookingMinutesByTitle[title] || 25;
 }
@@ -591,7 +1361,33 @@ function includesIngredient(ingredients, tag) {
 }
 
 function estimateBudget(missing) {
-  return missing.reduce((sum, item) => sum + (priceBook[item] || 3000), 0);
+  return uniqueByNormalize(missing).reduce((sum, item) => sum + getEstimatedIngredientPrice(item), 0);
+}
+
+function getEstimatedIngredientPrice(item) {
+  if (!isPurchasableIngredient(item)) return 0;
+  if (priceBook[item]) return priceBook[item];
+
+  const normalizedItem = normalize(item);
+  const matchedEntry = Object.entries(priceBook).find(([name]) => {
+    const normalizedName = normalize(name);
+    return normalizedItem.includes(normalizedName) || normalizedName.includes(normalizedItem);
+  });
+  return matchedEntry ? matchedEntry[1] : 4500;
+}
+
+function isPurchasableIngredient(item) {
+  return item && !nonPurchasableTags.has(item);
+}
+
+function uniqueByNormalize(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = normalize(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function normalize(value) {
@@ -610,18 +1406,17 @@ function renderPlan(plan, ingredients) {
   const difficultyCounts = { 1: 0, 2: 0, 3: 0 };
   let totalCookingMinutes = 0;
   let mealCount = 0;
-  let weeklyBudget = 0;
 
   plan.forEach((day) => {
     day.menu.forEach((meal) => {
       meal.matched.forEach((ingredient) => usedIngredients.add(ingredient));
-      meal.missing.forEach((ingredient) => missingWeekly.set(ingredient, priceBook[ingredient] || 3000));
+      meal.missing.forEach((ingredient) => missingWeekly.set(ingredient, getEstimatedIngredientPrice(ingredient)));
       difficultyCounts[meal.difficulty] += 1;
       totalCookingMinutes += meal.cookingMinutes;
       mealCount += 1;
-      weeklyBudget += meal.estimatedBudget;
     });
   });
+  const weeklyBudget = [...missingWeekly.values()].reduce((sum, price) => sum + price, 0);
 
   const missingText = missingWeekly.size
     ? [...missingWeekly.keys()].slice(0, 8).join(", ")
@@ -631,6 +1426,7 @@ function renderPlan(plan, ingredients) {
     점심과 저녁 기준으로 총 <strong>14끼</strong>를 만들었어요.
     입력 재료 ${ingredients.length}개 중 <strong>${usedIngredients.size || "여러"}가지</strong>가 반영됐고,
     추가 구매 예상 총액은 약 <strong>${formatWon(weeklyBudget)}</strong>입니다.
+    <br />예산은 대형마트/온라인몰 소포장 기준의 평균적인 가격대로 계산했어요.
     <br />난이도 구성: 쉬움 ${difficultyCounts[1]}끼 · 보통 ${difficultyCounts[2]}끼 · 도전 ${difficultyCounts[3]}끼
     <br />예상 조리시간: 총 ${formatMinutes(totalCookingMinutes)} · 끼니당 평균 ${Math.round(totalCookingMinutes / mealCount)}분
     <br />주요 추가 재료: ${missingText}
@@ -655,15 +1451,18 @@ function renderMeal(meal) {
   const matchedText = meal.matched.length > 0 ? meal.matched.join(", ") : "냉장고 기본 재료";
   const missingText = meal.missing.length > 0 ? meal.missing.join(", ") : "추가 구매 없음";
   const sourceText = "출처: 네이버 검색, 유튜브 검색";
+  const priceLinks = meal.missing.length > 0 ? renderPriceLinks(meal.missing) : "";
 
   return `
     <section class="meal-item">
       <span class="meal-time">${meal.mealLabel}</span>
       <p class="meal-title">${meal.title}</p>
+      <p class="meal-category">카테고리: ${meal.category}${meal.isCustom ? " · 내 레시피" : ""}</p>
       ${meal.isMealKit ? `<p class="meal-kit-label">밀키트/완제품</p>` : ""}
       <p class="meal-difficulty">난이도: ${getDifficultyLabel(meal.difficulty)} · 조리시간: 약 ${meal.cookingMinutes}분</p>
       <p class="meal-ingredients">활용 재료: ${matchedText}</p>
       <p class="meal-budget">추가 재료: ${missingText} · 예상 ${formatWon(meal.estimatedBudget)}</p>
+      ${priceLinks}
       <p class="meal-source">${sourceText}</p>
       <div class="recipe-links">
         <a href="${naverUrl}" target="_blank" rel="noreferrer">네이버 레시피</a>
@@ -671,6 +1470,37 @@ function renderMeal(meal) {
       </div>
     </section>
   `;
+}
+
+function renderPriceLinks(missingItems) {
+  return `
+    <div class="price-links" aria-label="추가 재료 가격 확인 링크">
+      ${uniqueByNormalize(missingItems)
+        .map((item) => {
+          const links = getIngredientPriceLinks(item);
+          return `
+            <div class="price-link-row">
+              <strong>${item} · 약 ${formatWon(getEstimatedIngredientPrice(item))}</strong>
+              <span>
+                ${links.map(([label, url]) => `<a href="${url}" target="_blank" rel="noreferrer">${label}</a>`).join("")}
+              </span>
+            </div>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function getIngredientPriceLinks(item) {
+  const priceQuery = encodeURIComponent(`${item} 가격`);
+  const itemQuery = encodeURIComponent(item);
+  return [
+    ["네이버", `https://search.naver.com/search.naver?query=${priceQuery}`],
+    ["쿠팡", `https://www.coupang.com/np/search?q=${itemQuery}`],
+    ["이마트", `https://emart.ssg.com/search.ssg?target=all&query=${itemQuery}`],
+    ["롯데마트", `https://www.lotteon.com/search/search/search.ecn?render=search&platform=pc&q=${itemQuery}`]
+  ];
 }
 
 function getRecipeUrls(title) {
@@ -714,6 +1544,7 @@ function createCalendarEvent(meal, date) {
   const missingText = meal.missing.length > 0 ? meal.missing.join(", ") : "추가 구매 없음";
   const description = [
     `레시피 이름: ${meal.title}`,
+    `카테고리: ${meal.category || "기본"}`,
     `구분: ${meal.isMealKit ? "밀키트/완제품" : "직접 조리"}`,
     `유튜브 링크: ${youtubeUrl}`,
     `블로그/레시피 링크: ${naverUrl}`,
