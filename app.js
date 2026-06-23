@@ -438,7 +438,6 @@ const categoryRatioInputs = document.querySelectorAll(".category-ratio-input");
 const randomCategoryModeInput = document.querySelector("#randomCategoryMode");
 const alternatePlanButton = document.querySelector("#alternatePlanButton");
 const calendarButton = document.querySelector("#calendarButton");
-const sampleButton = document.querySelector("#sampleButton");
 const summary = document.querySelector("#summary");
 const mealPlan = document.querySelector("#mealPlan");
 const ingredientPhoto = document.querySelector("#ingredientPhoto");
@@ -631,29 +630,6 @@ applyOcrTextButton.addEventListener("click", () => {
 
   mergeIngredients(ingredients);
   setOcrStatus(`${ingredients.length}개 후보를 재료칸에 반영했습니다: ${ingredients.join(", ")}`);
-});
-
-sampleButton.addEventListener("click", () => {
-  storedIngredients = {
-    cold: ["달걀", "두부", "애호박", "양파", "김치", "오이"],
-    frozen: ["닭가슴살"],
-    room: ["밥", "파스타면", "참치"],
-    seasoning: ["고추장", "간장"]
-  };
-  saveStoredIngredients();
-  renderIngredientChips();
-  storedMealKits = ["컬리 사골떡만둣국", "비마트 닭갈비 밀키트"];
-  saveStoredMealKits();
-  renderMealKitChips();
-  avoidInput.value = "너무 매운맛";
-  styleInput.value = "balanced";
-  lunchEaseInput.value = "70";
-  dinnerEaseInput.value = "40";
-  setCategoryRatios({ 한식: 50, 양식: 20, 일식: 10, 중식: 10, 기타: 10 });
-  if (randomCategoryModeInput) randomCategoryModeInput.checked = false;
-  updateEaseLabels();
-  updateCategoryRatioLabels();
-  form.requestSubmit();
 });
 
 alternatePlanButton.addEventListener("click", () => {
@@ -866,8 +842,11 @@ function addIngredientChip(storage) {
   renderIngredientChips();
 }
 
-function removeIngredientChip(storage, ingredient) {
-  storedIngredients[storage] = storedIngredients[storage].filter((item) => normalize(item) !== normalize(ingredient));
+function removeIngredientChip(storage, ingredientIndex) {
+  if (!storage || !Array.isArray(storedIngredients[storage])) return;
+  const index = Number(ingredientIndex);
+  if (!Number.isInteger(index) || index < 0) return;
+  storedIngredients[storage].splice(index, 1);
   saveStoredIngredients();
   renderIngredientChips();
 }
@@ -879,9 +858,9 @@ function renderIngredientChips() {
     container.innerHTML = items.length
       ? items
           .map(
-            (item) => `
-              <button class="ingredient-chip" type="button" data-storage="${storage}" data-ingredient="${item}" title="눌러서 삭제">
-                ${item}<span aria-hidden="true">×</span>
+            (item, index) => `
+              <button class="ingredient-chip" type="button" data-storage="${storage}" data-index="${index}" title="눌러서 삭제">
+                ${escapeHtml(item)}<span aria-hidden="true">×</span>
               </button>
             `
           )
@@ -890,7 +869,7 @@ function renderIngredientChips() {
   });
 
   document.querySelectorAll(".ingredient-chip[data-storage]").forEach((chip) => {
-    chip.addEventListener("click", () => removeIngredientChip(chip.dataset.storage, chip.dataset.ingredient));
+    chip.addEventListener("click", () => removeIngredientChip(chip.dataset.storage, chip.dataset.index));
   });
   ingredientsInput.value = getAllStoredIngredients().join(", ");
 }
