@@ -453,6 +453,7 @@ const customRecipeNameInput = document.querySelector("#customRecipeName");
 const customRecipeCategoryInput = document.querySelector("#customRecipeCategory");
 const customRecipeIngredientsInput = document.querySelector("#customRecipeIngredients");
 const customRecipeMealInput = document.querySelector("#customRecipeMeal");
+const customRecipeMethodInput = document.querySelector("#customRecipeMethod");
 const saveCustomRecipeButton = document.querySelector("#saveCustomRecipeButton");
 const customRecipeList = document.querySelector("#customRecipeList");
 const recipeSearchInput = document.querySelector("#recipeSearchInput");
@@ -460,6 +461,9 @@ const recipeCuisineFilter = document.querySelector("#recipeCuisineFilter");
 const recipeManagerSummary = document.querySelector("#recipeManagerSummary");
 const recipeManagerList = document.querySelector("#recipeManagerList");
 const recipeLoadMoreButton = document.querySelector("#recipeLoadMoreButton");
+const plannerPanel = document.querySelector(".planner-panel");
+const resultsPanel = document.querySelector(".results-panel");
+const recipeDetailDialog = createRecipeDetailDialog();
 
 let selectedPhoto = null;
 let deferredInstallPrompt = null;
@@ -475,7 +479,9 @@ let recipeOverrides = loadRecipeOverrides();
 let deletedRecipeIds = loadDeletedRecipeIds();
 let recipeDataLoadStatus = "loading";
 let recipeManagerVisibleCount = 120;
+let activeTab = "builder";
 
+setupTabs();
 startDateInput.value = getTodayInputValue();
 renderIngredientChips();
 renderMealKitChips();
@@ -669,7 +675,8 @@ form.addEventListener("submit", (event) => {
   if (ingredients.length === 0 && mealKits.length === 0) {
     summary.textContent = "재료나 밀키트를 하나 이상 입력해주세요. 예: 달걀, 김치, 밥 또는 부대찌개 밀키트";
     mealPlan.innerHTML = "";
-    ingredientsInput.focus();
+    activateTab("ingredients");
+    document.querySelector("#coldIngredient")?.focus();
     return;
   }
 
@@ -681,7 +688,94 @@ form.addEventListener("submit", (event) => {
   alternatePlanButton.disabled = false;
   calendarButton.disabled = false;
   renderPlan(plan, ingredients);
+  activateTab("plan");
 });
+
+function setupTabs() {
+  if (!form || form.querySelector(".tab-panels")) return;
+
+  document.querySelector(".app-shell")?.classList.add("tabbed-app");
+  plannerPanel?.classList.add("tabbed-shell");
+
+  const tabs = [
+    ["plan", "식단"],
+    ["builder", "식단짜기"],
+    ["ingredients", "재료관리"],
+    ["recipes", "레시피관리"],
+    ["photo", "사진"]
+  ];
+
+  const tabNav = document.createElement("nav");
+  tabNav.className = "tab-nav";
+  tabNav.setAttribute("aria-label", "앱 메뉴");
+  tabNav.innerHTML = tabs
+    .map(
+      ([key, label]) => `
+        <button class="tab-button" type="button" data-tab="${key}" aria-controls="tab-${key}">
+          ${label}
+        </button>
+      `
+    )
+    .join("");
+
+  const panels = document.createElement("div");
+  panels.className = "tab-panels";
+  panels.innerHTML = tabs
+    .map(([key, label]) => `<section id="tab-${key}" class="tab-panel" data-tab-panel="${key}" aria-label="${label}"></section>`)
+    .join("");
+
+  form.prepend(panels);
+  form.prepend(tabNav);
+
+  const panelMap = Object.fromEntries(
+    [...panels.querySelectorAll("[data-tab-panel]")].map((panel) => [panel.dataset.tabPanel, panel])
+  );
+  const submitButton = form.querySelector('button[type="submit"]');
+  const planActions = document.querySelector(".plan-actions");
+
+  appendExisting(panelMap.plan, resultsPanel);
+  appendExisting(panelMap.builder, document.querySelector(".intro"));
+  appendExisting(panelMap.builder, document.querySelector(".form-grid"));
+  appendExisting(panelMap.builder, document.querySelector(".ratio-card"));
+  appendExisting(panelMap.builder, document.querySelector(".category-ratio-card"));
+  appendExisting(panelMap.builder, submitButton);
+  appendExisting(panelMap.plan, planActions);
+  appendExisting(panelMap.ingredients, document.querySelector(".ingredient-board"));
+  appendExisting(panelMap.ingredients, document.querySelector(".meal-kit-board"));
+  appendExisting(panelMap.recipes, document.querySelector(".custom-recipe-card"));
+  appendExisting(panelMap.recipes, document.querySelector(".recipe-manager-card"));
+  appendExisting(panelMap.photo, document.querySelector(".ocr-card"));
+
+  tabNav.querySelectorAll(".tab-button").forEach((button) => {
+    button.addEventListener("click", () => activateTab(button.dataset.tab));
+  });
+
+  activateTab(lastPlan ? "plan" : "builder");
+}
+
+function appendExisting(panel, node) {
+  if (panel && node) panel.appendChild(node);
+}
+
+function activateTab(tab) {
+  if (!tab || !form?.querySelector(`[data-tab-panel="${tab}"]`)) return;
+  activeTab = tab;
+
+  form.querySelectorAll(".tab-button").forEach((button) => {
+    const isActive = button.dataset.tab === tab;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+
+  form.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+    panel.classList.toggle("is-active", panel.dataset.tabPanel === tab);
+    panel.hidden = panel.dataset.tabPanel !== tab;
+  });
+
+  requestAnimationFrame(() => {
+    document.querySelector(".tab-nav")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  });
+}
 
 function updateEaseLabels() {
   lunchEaseValue.textContent = `${lunchEaseInput.value}%`;
@@ -873,6 +967,8 @@ saveCustomRecipeButton.addEventListener("click", () => {
   const category = customRecipeCategoryInput.value.trim() || "내 레시피";
   const tags = parseList(customRecipeIngredientsInput.value);
   const mealValue = customRecipeMealInput.value;
+  const methodText = customRecipeMethodInput?.value.trim() || "";
+  const methodSteps = parseMethodSteps(methodText);
 
   if (!title || tags.length === 0) {
     customRecipeNameInput.focus();
@@ -887,6 +983,8 @@ saveCustomRecipeButton.addEventListener("click", () => {
       category,
       tags,
       meal,
+      methodText,
+      methodSteps,
       type: "balanced"
     };
     editingRecipeId = null;
@@ -901,6 +999,8 @@ saveCustomRecipeButton.addEventListener("click", () => {
     title,
     category,
     tags,
+    methodText,
+    methodSteps,
     type: "balanced",
     meal: mealValue === "both" ? ["lunch", "dinner"] : [mealValue],
     isCustom: true
@@ -924,12 +1024,13 @@ function renderCustomRecipes() {
     ? customRecipes
         .map(
           (recipe) => `
-            <article class="custom-recipe-item">
+            <article class="custom-recipe-item clickable-recipe" data-action="view-custom" data-id="${recipe.id}" tabindex="0">
               <div>
                 <strong>${recipe.title}</strong>
                 <span>${recipe.category} · ${recipe.tags.join(", ")}</span>
               </div>
               <div class="custom-recipe-actions">
+                <button type="button" data-action="view-custom" data-id="${recipe.id}">상세</button>
                 <button type="button" data-action="edit" data-id="${recipe.id}">수정</button>
                 <button type="button" data-action="delete" data-id="${recipe.id}">삭제</button>
               </div>
@@ -939,11 +1040,16 @@ function renderCustomRecipes() {
         .join("")
     : `<p class="empty-custom-recipes">아직 등록한 레시피가 없습니다.</p>`;
 
-  customRecipeList.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => {
-      const recipe = customRecipes.find((item) => item.id === button.dataset.id);
+  customRecipeList.querySelectorAll("[data-action]").forEach((element) => {
+    element.addEventListener("click", (event) => {
+      if (element.matches("article") && event.target.closest("button")) return;
+      const recipe = customRecipes.find((item) => item.id === element.dataset.id);
       if (!recipe) return;
-      if (button.dataset.action === "delete") {
+      if (element.dataset.action === "view-custom") {
+        showRecipeDetail(recipe);
+        return;
+      }
+      if (element.dataset.action === "delete") {
         customRecipes = customRecipes.filter((item) => item.id !== recipe.id);
         saveCustomRecipes();
         renderCustomRecipes();
@@ -954,7 +1060,20 @@ function renderCustomRecipes() {
       customRecipeCategoryInput.value = recipe.category;
       customRecipeIngredientsInput.value = recipe.tags.join(", ");
       customRecipeMealInput.value = recipe.meal.length > 1 ? "both" : recipe.meal[0];
+      if (customRecipeMethodInput) {
+        customRecipeMethodInput.value = recipe.methodText || (recipe.methodSteps || []).join("\n");
+      }
       saveCustomRecipeButton.textContent = "내 레시피 수정 완료";
+    });
+  });
+
+  customRecipeList.querySelectorAll(".clickable-recipe").forEach((item) => {
+    item.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        const recipe = customRecipes.find((entry) => entry.id === item.dataset.id);
+        if (recipe) showRecipeDetail(recipe);
+      }
     });
   });
 }
@@ -964,6 +1083,7 @@ function clearCustomRecipeForm() {
   customRecipeCategoryInput.value = "";
   customRecipeIngredientsInput.value = "";
   customRecipeMealInput.value = "both";
+  if (customRecipeMethodInput) customRecipeMethodInput.value = "";
   saveCustomRecipeButton.textContent = "내 레시피 추가";
 }
 
@@ -1061,12 +1181,13 @@ function renderRecipeManager() {
           const displayRecipe = { ...recipe, ...overridden };
           const deleted = deletedRecipeIds.has(recipe.id);
           return `
-            <article class="recipe-manager-item ${deleted ? "is-disabled" : ""}">
+            <article class="recipe-manager-item clickable-recipe ${deleted ? "is-disabled" : ""}" data-action="view-seed" data-id="${recipe.id}" tabindex="0">
               <div>
                 <strong>${displayRecipe.title}</strong>
                 <span>${displayRecipe.cuisine || "한식"} · ${displayRecipe.category || "기본"} · ${(displayRecipe.tags || []).slice(0, 5).join(", ")}</span>
               </div>
               <div class="recipe-manager-actions">
+                <button type="button" data-action="view-seed" data-id="${recipe.id}">상세</button>
                 <button type="button" data-action="edit-seed" data-id="${recipe.id}">수정</button>
                 <button type="button" data-action="${deleted ? "restore-seed" : "delete-seed"}" data-id="${recipe.id}">
                   ${deleted ? "복구" : "삭제"}
@@ -1078,17 +1199,22 @@ function renderRecipeManager() {
         .join("")
     : `<p class="empty-custom-recipes">검색 결과가 없습니다.</p>`;
 
-  recipeManagerList.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => {
-      const recipe = seedRecipes.find((item) => item.id === button.dataset.id);
+  recipeManagerList.querySelectorAll("[data-action]").forEach((element) => {
+    element.addEventListener("click", (event) => {
+      if (element.matches("article") && event.target.closest("button")) return;
+      const recipe = seedRecipes.find((item) => item.id === element.dataset.id);
       if (!recipe) return;
-      if (button.dataset.action === "delete-seed") {
+      if (element.dataset.action === "view-seed") {
+        showRecipeDetail({ ...recipe, ...(recipeOverrides[recipe.id] || {}) });
+        return;
+      }
+      if (element.dataset.action === "delete-seed") {
         deletedRecipeIds.add(recipe.id);
         saveDeletedRecipeIds();
         renderRecipeManager();
         return;
       }
-      if (button.dataset.action === "restore-seed") {
+      if (element.dataset.action === "restore-seed") {
         deletedRecipeIds.delete(recipe.id);
         saveDeletedRecipeIds();
         renderRecipeManager();
@@ -1099,10 +1225,362 @@ function renderRecipeManager() {
       customRecipeCategoryInput.value = current.category || "한식";
       customRecipeIngredientsInput.value = (current.tags || []).join(", ");
       customRecipeMealInput.value = current.meal?.length > 1 ? "both" : current.meal?.[0] || "both";
+      if (customRecipeMethodInput) {
+        customRecipeMethodInput.value = current.methodText || (current.methodSteps || current.sourceMethodSteps || []).join("\n");
+      }
       editingRecipeId = `override:${recipe.id}`;
       saveCustomRecipeButton.textContent = "기본 레시피 수정 저장";
     });
   });
+
+  recipeManagerList.querySelectorAll(".clickable-recipe").forEach((item) => {
+    item.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        const recipe = seedRecipes.find((entry) => entry.id === item.dataset.id);
+        if (recipe) showRecipeDetail({ ...recipe, ...(recipeOverrides[recipe.id] || {}) });
+      }
+    });
+  });
+}
+
+function createRecipeDetailDialog() {
+  const dialog = document.createElement("section");
+  dialog.className = "recipe-detail-dialog";
+  dialog.hidden = true;
+  dialog.innerHTML = `
+    <div class="recipe-detail-backdrop" data-detail-close></div>
+    <article class="recipe-detail-card" role="dialog" aria-modal="true" aria-labelledby="recipeDetailTitle">
+      <div class="recipe-detail-header">
+        <div>
+          <span class="recipe-detail-kicker">Recipe Detail</span>
+          <h3 id="recipeDetailTitle">레시피 상세</h3>
+        </div>
+        <button class="ghost-button recipe-detail-close" type="button" data-detail-close>닫기</button>
+      </div>
+      <div class="recipe-detail-body"></div>
+    </article>
+  `;
+  document.body.appendChild(dialog);
+  dialog.querySelectorAll("[data-detail-close]").forEach((button) => {
+    button.addEventListener("click", () => {
+      dialog.hidden = true;
+      document.body.classList.remove("has-recipe-detail");
+    });
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !dialog.hidden) {
+      dialog.hidden = true;
+      document.body.classList.remove("has-recipe-detail");
+    }
+  });
+  return dialog;
+}
+
+function showRecipeDetail(recipe) {
+  if (!recipeDetailDialog || !recipe) return;
+  const body = recipeDetailDialog.querySelector(".recipe-detail-body");
+  const title = recipeDetailDialog.querySelector("#recipeDetailTitle");
+  title.textContent = recipe.title;
+  body.innerHTML = renderRecipeDetail(recipe);
+  recipeDetailDialog.hidden = false;
+  document.body.classList.add("has-recipe-detail");
+}
+
+function renderRecipeDetail(recipe) {
+  const tags = uniqueByNormalize(recipe.tags || []);
+  const estimatedTotal = estimateBudget(tags);
+  const sourceName = recipe.sourceName || "레시피 검색";
+  const sourceUrl = recipe.sourceUrl || getRecipeUrls(recipe.title).naverUrl;
+  const blogUrl =
+    recipe.naverBlogUrl ||
+    recipe.naverBlogSearchUrl ||
+    `https://search.naver.com/search.naver?where=blog&query=${encodeURIComponent(recipe.title + " 레시피")}`;
+  const blogTitle = recipe.naverBlogTitle || "네이버 블로그 대표/검색";
+  const youtubeRecipeUrl = recipe.youtubeUrl || getRecipeUrls(recipe.title).youtubeUrl;
+  const youtubeTitle = recipe.youtubeTitle || "유튜브 레시피 검색";
+  const detailFile = recipe.detailFile || "";
+  const method = getRecipeMethodSteps(recipe);
+  const mdText = buildRecipeMarkdown(recipe);
+  const mdUrl = `data:text/markdown;charset=utf-8,${encodeURIComponent(mdText)}`;
+  const mdFileName = `${safeFileName(recipe.id || "custom")}-${safeFileName(recipe.title)}.md`;
+
+  return `
+    <div class="recipe-detail-meta">
+      <span>${escapeHtml(recipe.cuisine || "내 레시피")}</span>
+      <span>${escapeHtml(recipe.category || getRecipeCategory(recipe))}</span>
+      <span>${getDifficultyLabel(recipe.difficulty || 2)}</span>
+      <span>약 ${recipe.cookingMinutes || getCookingMinutes(recipe.title)}분</span>
+    </div>
+
+    <section class="recipe-detail-section">
+      <h4>상세 재료와 예산</h4>
+      <div class="recipe-detail-table">
+        ${
+          tags.length
+            ? tags
+                .map(
+                  (tag) => `
+                    <div>
+                      <span>${escapeHtml(tag)}</span>
+                      <strong>${formatWon(getEstimatedIngredientPrice(tag))}</strong>
+                    </div>
+                  `
+                )
+                .join("")
+            : `<p class="empty-custom-recipes">등록된 재료가 없습니다.</p>`
+        }
+      </div>
+      <p class="recipe-detail-budget">예상 재료비 합계: <strong>${formatWon(estimatedTotal)}</strong></p>
+    </section>
+
+    <section class="recipe-detail-section">
+      <h4>만드는 방법</h4>
+      <ol class="recipe-method-list">
+        ${method.map((step) => `<li>${escapeHtml(step.replace(/^\\d+\\.\\s*/, ""))}</li>`).join("")}
+      </ol>
+    </section>
+
+    <section class="recipe-detail-section">
+      <h4>추가 참조 링크</h4>
+      <div class="recipe-links">
+        <a href="${sourceUrl}" target="_blank" rel="noreferrer">${escapeHtml(sourceName)}</a>
+        <a href="${blogUrl}" target="_blank" rel="noreferrer">네이버 블로그${blogTitle ? ` · ${escapeHtml(blogTitle)}` : ""}</a>
+        <a href="${youtubeRecipeUrl}" target="_blank" rel="noreferrer">
+          유튜브${recipe.youtubeViewCount ? ` · 조회 ${formatCount(recipe.youtubeViewCount)}` : ""}
+        </a>
+        <a href="${getRecipeUrls(recipe.title).naverUrl}" target="_blank" rel="noreferrer">네이버 추가 검색</a>
+        <a href="${getRecipeUrls(recipe.title).youtubeUrl}" target="_blank" rel="noreferrer">유튜브 추가 검색</a>
+        ${detailFile ? `<a href="${detailFile}" target="_blank" rel="noreferrer">MD 원본 파일</a>` : ""}
+        <a href="${mdUrl}" download="${mdFileName}">MD 다운로드</a>
+      </div>
+    </section>
+  `;
+}
+
+function getRecipeMethodSteps(recipe) {
+  if (Array.isArray(recipe.methodSteps) && recipe.methodSteps.length) {
+    return recipe.methodSteps.map((step) => String(step).replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean);
+  }
+  if (Array.isArray(recipe.sourceMethodSteps) && recipe.sourceMethodSteps.length) {
+    return recipe.sourceMethodSteps.map((step) => String(step).replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean);
+  }
+  if (recipe.methodText) {
+    const parsed = parseMethodSteps(recipe.methodText);
+    if (parsed.length) return parsed;
+  }
+
+  const tags = recipe.tags || [];
+  const main = tags[0] || "주재료";
+  const sub = tags.slice(1).join(", ") || "부재료";
+  const categoryText = `${recipe.title} ${recipe.category || ""}`;
+
+  if (/미역국/.test(categoryText)) {
+    return [
+      "미역은 물에 불린 뒤 여러 번 헹궈 물기를 짭니다.",
+      `냄비에 참기름을 두르고 ${main}, 미역을 넣어 향이 날 때까지 볶습니다.`,
+      "물이나 육수를 붓고 끓어오르면 중약불로 줄여 충분히 우립니다.",
+      "국간장과 마늘로 간을 맞추고 부족한 간은 소금으로 조절합니다.",
+      "재료가 부드럽게 익으면 거품을 걷고 따뜻하게 냅니다."
+    ];
+  }
+
+  if (/된장국|된장찌개|청국장/.test(categoryText)) {
+    return [
+      "멸치육수나 물을 끓이고 채소와 두부를 먹기 좋은 크기로 썹니다.",
+      "된장이나 청국장을 체에 풀어 국물에 고르게 섞습니다.",
+      `${main}, ${sub}를 단단한 재료부터 넣고 끓입니다.`,
+      "거품을 걷고 마늘, 대파, 고춧가루 등으로 맛을 조정합니다.",
+      "두부와 향채를 마지막에 넣어 한소끔 더 끓입니다."
+    ];
+  }
+
+  if (/김치찌개|김칫국|김치/.test(categoryText) && /찌개|국|탕/.test(categoryText)) {
+    return [
+      "김치는 먹기 좋은 크기로 자르고 고기나 통조림 재료는 물기를 정리합니다.",
+      `냄비에 ${main}, 김치를 넣고 김치 향이 올라올 때까지 볶습니다.`,
+      "물이나 육수를 붓고 김치가 부드러워질 때까지 끓입니다.",
+      "두부, 양파, 대파 등 부재료를 넣고 간장이나 고춧가루로 간을 맞춥니다.",
+      "중약불에서 맛을 충분히 우린 뒤 마지막 간을 확인합니다."
+    ];
+  }
+
+  if (/국|탕|찌개|전골|Soup|Stew|Chowder/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 손질하고 국물에 들어갈 재료를 크기별로 나눕니다.`,
+      "냄비에 육수나 물을 넣고 끓인 뒤 향을 내는 재료를 먼저 넣습니다.",
+      "익는 시간이 긴 재료부터 넣고 중불에서 충분히 끓입니다.",
+      "간장, 된장, 고추장, 소금 등 메뉴에 맞는 양념으로 간을 맞춥니다.",
+      "마지막에 대파나 향채를 넣고 한소끔 끓여 마무리합니다."
+    ];
+  }
+
+  if (/조림|Braise/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 조림용 크기로 손질합니다.`,
+      "간장, 단맛 재료, 마늘, 물이나 육수를 섞어 조림 양념을 만듭니다.",
+      "냄비에 재료와 양념을 넣고 끓어오르면 중약불로 줄입니다.",
+      "중간중간 양념을 끼얹으며 속까지 익도록 조립니다.",
+      "국물이 자작해지고 윤기가 돌면 불을 끄고 잠시 두어 맛을 배게 합니다."
+    ];
+  }
+
+  if (/구이|Roast|Schnitzel|Piccata/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 각각 곁들일 크기로 준비하고 물기를 제거합니다.`,
+      "소금, 후추, 간장 양념 등 메뉴에 맞게 밑간합니다.",
+      "팬이나 오븐을 충분히 예열한 뒤 겉면부터 노릇하게 익힙니다.",
+      "속까지 익도록 불을 조절하고 필요하면 소스나 양념을 덧바릅니다.",
+      "잠시 휴지한 뒤 먹기 좋은 크기로 담아냅니다."
+    ];
+  }
+
+  if (/볶음|Stir|Teriyaki|Kung Pao|Mapo|Mongolian|Szechuan|Sichuan/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 손질하고 물기를 제거합니다.`,
+      "팬을 강하게 예열한 뒤 기름을 두르고 마늘, 파 등 향 재료를 먼저 볶습니다.",
+      "주재료를 넣어 겉면을 빠르게 익히고 채소를 순서대로 더합니다.",
+      "간장, 고추장, 굴소스, 설탕 등 메뉴에 맞는 양념을 넣어 센 불에서 섞습니다.",
+      "소스가 재료에 고르게 입혀지면 불을 끄고 참기름이나 향채로 마무리합니다."
+    ];
+  }
+
+  if (/전|부침|Frittata|Quiche/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 잘게 손질하고 물기가 많으면 가볍게 짭니다.`,
+      "밀가루, 부침가루, 달걀 등 메뉴에 맞는 반죽을 만듭니다.",
+      "손질한 재료를 반죽에 섞고 팬에 기름을 넉넉히 두릅니다.",
+      "앞뒤로 노릇하게 부치며 속까지 익힙니다.",
+      "기름을 빼고 초간장이나 곁들임 소스와 함께 냅니다."
+    ];
+  }
+
+  if (/나물|무침/.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 씻고 질긴 부분을 정리합니다.`,
+      "데칠 재료는 끓는 물에 짧게 데친 뒤 찬물에 헹궈 물기를 짭니다.",
+      "간장, 소금, 마늘, 참기름 등으로 기본 양념을 만듭니다.",
+      "재료와 양념을 손끝으로 가볍게 버무립니다.",
+      "간을 확인하고 깨나 다진 파를 더해 마무리합니다."
+    ];
+  }
+
+  if (/볶음밥|덮밥|Rice Bowl|Risotto/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 밥과 잘 섞이도록 작게 손질합니다.`,
+      "팬에 기름을 두르고 향 재료와 단단한 재료부터 볶습니다.",
+      "밥이나 덮밥 소스를 넣고 재료와 고르게 섞습니다.",
+      "간장, 소금, 후추 등으로 간을 맞추고 수분을 날립니다.",
+      "그릇에 담고 달걀, 김가루, 깨 등 어울리는 고명을 올립니다."
+    ];
+  }
+
+  if (/면|국수|우동|소면|칼국수|Noodle|Pasta|Spaghetti|Carbonara|Alfredo|Pesto/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 손질하고 소스나 육수를 먼저 준비합니다.`,
+      "면은 포장 기준보다 약간 짧게 삶아 물기를 빼고 면수를 조금 남깁니다.",
+      "팬이나 냄비에서 소스, 육수, 주재료를 먼저 끓이거나 볶습니다.",
+      "삶은 면을 넣고 면수로 농도를 조절하며 고르게 섞습니다.",
+      "간을 맞춘 뒤 치즈, 김가루, 파, 깨 등 메뉴에 맞는 고명을 올립니다."
+    ];
+  }
+
+  if (/Curry|카레/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 카레에 어울리는 크기로 썹니다.`,
+      "냄비에 기름을 두르고 단단한 채소와 고기를 먼저 볶습니다.",
+      "물이나 육수를 붓고 재료가 부드러워질 때까지 끓입니다.",
+      "카레 양념을 풀어 농도가 나도록 저어가며 끓입니다.",
+      "밥이나 빵에 곁들이고 기호에 따라 후추나 허브를 더합니다."
+    ];
+  }
+
+  if (/샐러드|Salad|Sandwich|Burger|Melt|Club/i.test(categoryText)) {
+    return [
+      `${main}, ${sub}를 씻고 물기를 제거한 뒤 먹기 좋은 크기로 준비합니다.`,
+      "익혀야 하는 고기, 달걀, 해산물은 먼저 조리해 식힙니다.",
+      "드레싱이나 소스를 따로 섞어 간을 확인합니다.",
+      "채소와 주재료를 담고 소스를 고르게 더합니다.",
+      "빵이나 밥을 쓰는 메뉴는 마지막에 조립해 바로 먹습니다."
+    ];
+  }
+
+  return [
+    `${main}, ${sub}를 손질합니다.`,
+    "조리도구를 예열하고 기본 양념을 준비합니다.",
+    "익는 시간이 긴 재료부터 넣고 순서대로 조리합니다.",
+    "간을 맞추고 재료가 고르게 익었는지 확인합니다.",
+    "그릇에 담고 기호에 맞게 마무리합니다."
+  ];
+}
+
+function buildRecipeMarkdown(recipe) {
+  const tags = uniqueByNormalize(recipe.tags || []);
+  const blogUrl =
+    recipe.naverBlogUrl ||
+    recipe.naverBlogSearchUrl ||
+    `https://search.naver.com/search.naver?where=blog&query=${encodeURIComponent(recipe.title + " 레시피")}`;
+  const blogTitle = recipe.naverBlogTitle || `${recipe.title} 네이버 블로그 검색`;
+  const youtubeRecipeUrl = recipe.youtubeUrl || getRecipeUrls(recipe.title).youtubeUrl;
+  const youtubeTitle = recipe.youtubeTitle || `${recipe.title} 유튜브 검색`;
+  const ingredientRows = tags.map((tag) => `| ${tag} | ${formatWon(getEstimatedIngredientPrice(tag))} |`).join("\n") || "| 추가 정보 없음 | - |";
+  return `# ${recipe.title}
+
+## 기본 정보
+
+| 항목 | 내용 |
+|---|---|
+| 음식 카테고리 | ${recipe.cuisine || "내 레시피"} / ${recipe.category || getRecipeCategory(recipe)} |
+| 난이도 | ${getDifficultyLabel(recipe.difficulty || 2)} |
+| 만드는 시간 | 약 ${recipe.cookingMinutes || getCookingMinutes(recipe.title)}분 |
+| 식사 구분 | ${(recipe.meal || ["lunch", "dinner"]).join(", ")} |
+| 예상 재료비 | ${formatWon(estimateBudget(tags))} |
+
+## 상세 재료
+
+| 재료 | 예산 기준가 |
+|---|---:|
+${ingredientRows}
+
+## 만드는 방법
+
+${getRecipeMethodSteps(recipe).map((step, index) => `${index + 1}. ${step}`).join("\n")}
+
+## 참조 레시피 링크
+
+- [네이버 블로그 대표 레시피: ${blogTitle}](${blogUrl})
+- [유튜브 인기 레시피: ${youtubeTitle}](${youtubeRecipeUrl})${recipe.youtubeViewCount ? ` - 조회수 약 ${recipe.youtubeViewCount.toLocaleString("ko-KR")}회` : ""}
+- [네이버 블로그 검색](https://search.naver.com/search.naver?where=blog&query=${encodeURIComponent(recipe.title + " 레시피")})
+- [유튜브 검색](${getRecipeUrls(recipe.title).youtubeUrl})
+
+## 관리 메모
+
+- 대표 참조는 네이버 블로그 검색 상위 결과와 유튜브 조회수 기준 인기 영상을 우선 사용합니다.
+- 만드는 방법은 원문 전문을 복사하지 않고 레시피 정보 기준으로 재작성한 요약 조리법입니다.
+- 원문 레시피 전문을 복사하지 않고, 이후 새 레시피 MD 파일도 이 구조를 유지합니다.
+`;
+}
+
+function formatCount(value) {
+  if (value >= 10000) return `${Math.round(value / 10000).toLocaleString("ko-KR")}만`;
+  return value.toLocaleString("ko-KR");
+}
+
+function safeFileName(value) {
+  return String(value)
+    .normalize("NFKC")
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function updateRecipeCuisineOptions() {
@@ -1124,6 +1602,13 @@ function parseList(value) {
   return value
     .split(/[\n,]/)
     .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseMethodSteps(value) {
+  return String(value || "")
+    .split(/\n+/)
+    .map((item) => item.replace(/^\s*\d+[.)]\s*/, "").trim())
     .filter(Boolean);
 }
 
@@ -1434,23 +1919,34 @@ function renderPlan(plan, ingredients) {
 
   mealPlan.innerHTML = plan
     .map(
-      ({ day, menu }) => `
+      ({ day, menu }, dayIndex) => `
         <article class="day-card">
           <h3>${day}요일 <span>${menu.length} meals</span></h3>
           <div class="meal-list">
-            ${menu.map(renderMeal).join("")}
+            ${menu.map((meal, mealIndex) => renderMeal(meal, dayIndex, mealIndex)).join("")}
           </div>
         </article>
       `
     )
     .join("");
+
+  mealPlan.querySelectorAll("[data-meal-detail]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const dayIndex = Number(button.dataset.dayIndex);
+      const mealIndex = Number(button.dataset.mealIndex);
+      const meal = lastPlan?.[dayIndex]?.menu?.[mealIndex];
+      if (meal) showRecipeDetail(meal);
+    });
+  });
 }
 
-function renderMeal(meal) {
-  const { naverUrl, youtubeUrl } = getRecipeUrls(meal.title);
+function renderMeal(meal, dayIndex, mealIndex) {
+  const fallbackUrls = getRecipeUrls(meal.title);
+  const blogUrl = meal.naverBlogUrl || meal.naverBlogSearchUrl || fallbackUrls.naverUrl;
+  const youtubeUrl = meal.youtubeUrl || fallbackUrls.youtubeUrl;
   const matchedText = meal.matched.length > 0 ? meal.matched.join(", ") : "냉장고 기본 재료";
   const missingText = meal.missing.length > 0 ? meal.missing.join(", ") : "추가 구매 없음";
-  const sourceText = "출처: 네이버 검색, 유튜브 검색";
+  const referenceText = "추가 참조: 네이버 블로그, 유튜브";
   const priceLinks = meal.missing.length > 0 ? renderPriceLinks(meal.missing) : "";
 
   return `
@@ -1463,9 +1959,13 @@ function renderMeal(meal) {
       <p class="meal-ingredients">활용 재료: ${matchedText}</p>
       <p class="meal-budget">추가 재료: ${missingText} · 예상 ${formatWon(meal.estimatedBudget)}</p>
       ${priceLinks}
-      <p class="meal-source">${sourceText}</p>
+      <button class="ghost-button meal-detail-button" type="button" data-meal-detail data-day-index="${dayIndex}" data-meal-index="${mealIndex}">
+        레시피 상세보기
+      </button>
+      <p class="meal-source">${referenceText}</p>
       <div class="recipe-links">
-        <a href="${naverUrl}" target="_blank" rel="noreferrer">네이버 레시피</a>
+        ${meal.detailFile ? `<a href="${meal.detailFile}" target="_blank" rel="noreferrer">MD 원본</a>` : ""}
+        <a href="${blogUrl}" target="_blank" rel="noreferrer">네이버 블로그</a>
         <a href="${youtubeUrl}" target="_blank" rel="noreferrer">유튜브 영상</a>
       </div>
     </section>
