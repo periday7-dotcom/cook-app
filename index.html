@@ -136,6 +136,20 @@
             <textarea id="mealKits" class="legacy-ingredients" rows="4" hidden></textarea>
           </section>
 
+          <section class="sync-card" aria-label="기기 간 데이터 옮기기">
+            <div class="section-title">
+              <strong>자동 동기화</strong>
+              <span>같은 Google 계정으로 로그인하면 핸드폰과 PC의 앱 데이터가 자동으로 맞춰집니다.</span>
+            </div>
+            <div class="sync-actions">
+              <button id="firebaseSyncButton" class="secondary-button" type="button">Google로 자동 동기화</button>
+              <button id="firebaseSignOutButton" class="ghost-button" type="button" hidden>동기화 로그아웃</button>
+            </div>
+            <p id="syncStatus" class="sync-status">
+              동기화 항목: 재료, 반찬, 밀키트, 내 레시피, 기본 레시피 수정/삭제, 마지막 식단, 식단 설정
+            </p>
+          </section>
+
           <div class="form-grid">
             <label>
               선호 스타일
@@ -273,6 +287,63 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signInWithRedirect,
+        getRedirectResult,
+        onAuthStateChanged,
+        signOut
+      } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+        onSnapshot,
+        setDoc,
+        serverTimestamp
+      } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBm2zqFm7c7yalXEaH8tdranqgj5qB1joM",
+        authDomain: "cook-app-sync.firebaseapp.com",
+        projectId: "cook-app-sync",
+        storageBucket: "cook-app-sync.firebasestorage.app",
+        messagingSenderId: "500527852703",
+        appId: "1:500527852703:web:30f3b8cddef32921d406aa"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const provider = new GoogleAuthProvider();
+
+      getRedirectResult(auth).catch(() => {});
+
+      window.firebaseSync = {
+        auth,
+        db,
+        signIn: async () => {
+          try {
+            return await signInWithPopup(auth, provider);
+          } catch {
+            return signInWithRedirect(auth, provider);
+          }
+        },
+        signOut: () => signOut(auth),
+        onAuthStateChanged: (callback) => onAuthStateChanged(auth, callback),
+        userDoc: (uid) => doc(db, "users", uid),
+        getDoc,
+        onSnapshot,
+        setDoc,
+        serverTimestamp
+      };
+
+      window.dispatchEvent(new Event("firebase-sync-ready"));
+    </script>
     <script src="app.js"></script>
   </body>
 </html>

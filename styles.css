@@ -247,6 +247,7 @@ select:focus {
 
 .ingredient-board,
 .meal-kit-board,
+.sync-card,
 .category-ratio-card,
 .custom-recipe-card,
 .recipe-manager-card {
@@ -710,6 +711,54 @@ button:disabled {
 .meal-detail-button {
   width: 100%;
   margin: 2px 0 8px;
+}
+
+.sync-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.sync-actions .secondary-button,
+.sync-actions .ghost-button,
+.sync-actions .import-data-label {
+  width: 100%;
+}
+
+.import-data-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--leaf-dark);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.import-data-label:hover {
+  background: var(--mint-soft);
+}
+
+#importDataFile {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.sync-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.sync-status.is-error {
+  color: #b94c40;
 }
 
 .recipe-links {

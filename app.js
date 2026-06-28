@@ -419,6 +419,12 @@ const mealKitsInput = document.querySelector("#mealKits");
 const mealKitChipInput = document.querySelector("#mealKitInput");
 const addMealKitButton = document.querySelector("#addMealKitButton");
 const mealKitChips = document.querySelector("#mealKitChips");
+const firebaseSyncButton = document.querySelector("#firebaseSyncButton");
+const firebaseSignOutButton = document.querySelector("#firebaseSignOutButton");
+const createSyncLinkButton = document.querySelector("#createSyncLinkButton");
+const exportDataButton = document.querySelector("#exportDataButton");
+const importDataFile = document.querySelector("#importDataFile");
+const syncStatus = document.querySelector("#syncStatus");
 const ingredientChipInputs = document.querySelectorAll(".ingredient-chip-input");
 const addChipButtons = document.querySelectorAll(".add-chip-button");
 const chipLists = {
@@ -468,8 +474,8 @@ const recipeDetailDialog = createRecipeDetailDialog();
 let selectedPhoto = null;
 let deferredInstallPrompt = null;
 let variationSeed = 0;
-let lastPlan = null;
-let lastIngredients = [];
+let lastPlan = loadSavedPlan();
+let lastIngredients = loadSavedPlanIngredients();
 let editingRecipeId = null;
 let storedIngredients = loadStoredIngredients();
 let storedMealKits = loadStoredMealKits();
@@ -480,13 +486,23 @@ let deletedRecipeIds = loadDeletedRecipeIds();
 let recipeDataLoadStatus = "loading";
 let recipeManagerVisibleCount = 120;
 let activeTab = "builder";
+let firebaseUser = null;
+let firebaseUnsubscribe = null;
+let firebaseApplyingRemote = false;
+let firebaseSaveTimer = null;
 
 setupTabs();
 startDateInput.value = getTodayInputValue();
+applyImportedSettings(loadAppSettings());
 renderIngredientChips();
 renderMealKitChips();
 renderCustomRecipes();
 loadSeedRecipes();
+if (lastPlan) {
+  alternatePlanButton.disabled = false;
+  calendarButton.disabled = false;
+  renderPlan(lastPlan, lastIngredients);
+}
 recipeSearchInput?.addEventListener("input", () => {
   recipeManagerVisibleCount = 120;
   renderRecipeManager();
@@ -557,6 +573,13 @@ categoryRatioInputs.forEach((input) => {
 });
 
 randomCategoryModeInput?.addEventListener("change", updateCategoryRatioLabels);
+firebaseSyncButton?.addEventListener("click", signInToFirebaseSync);
+firebaseSignOutButton?.addEventListener("click", signOutFromFirebaseSync);
+createSyncLinkButton?.addEventListener("click", createSyncLink);
+exportDataButton?.addEventListener("click", exportAppData);
+importDataFile?.addEventListener("change", importAppData);
+importDataFromUrlHash();
+setupFirebaseSync();
 
 function showInstallButtons() {
   installButton.hidden = false;
@@ -662,6 +685,8 @@ form.addEventListener("submit", (event) => {
   const plan = buildPlan(ingredients, mealKits, avoid, styleInput.value, difficultyPreferences, categoryPreferences);
   lastPlan = plan;
   lastIngredients = ingredients;
+  saveAppSettings();
+  saveSavedPlan();
   alternatePlanButton.disabled = false;
   calendarButton.disabled = false;
   renderPlan(plan, ingredients);
@@ -719,6 +744,7 @@ function setupTabs() {
   appendExisting(panelMap.plan, planActions);
   appendExisting(panelMap.ingredients, document.querySelector(".ingredient-board"));
   appendExisting(panelMap.ingredients, document.querySelector(".meal-kit-board"));
+  appendExisting(panelMap.ingredients, document.querySelector(".sync-card"));
   appendExisting(panelMap.recipes, document.querySelector(".custom-recipe-card"));
   appendExisting(panelMap.recipes, document.querySelector(".recipe-manager-card"));
   appendExisting(panelMap.photo, document.querySelector(".ocr-card"));
@@ -806,8 +832,12 @@ function getSelectedStartDate() {
   return new Date(year, month - 1, day);
 }
 
+function getEmptyStoredIngredients() {
+  return { cold: [], frozen: [], room: [], seasoning: [], side: [] };
+}
+
 function loadStoredIngredients() {
-  const empty = { cold: [], frozen: [], room: [], seasoning: [], side: [] };
+  const empty = getEmptyStoredIngredients();
   try {
     return { ...empty, ...JSON.parse(localStorage.getItem("storedIngredients") || "{}") };
   } catch {
@@ -818,6 +848,7 @@ function loadStoredIngredients() {
 function saveStoredIngredients() {
   localStorage.setItem("storedIngredients", JSON.stringify(storedIngredients));
   ingredientsInput.value = getAllStoredIngredients().join(", ");
+  scheduleCloudSave();
 }
 
 function getAllStoredIngredients() {
@@ -886,6 +917,54 @@ function loadStoredMealKits() {
 function saveStoredMealKits() {
   localStorage.setItem("storedMealKits", JSON.stringify(storedMealKits));
   mealKitsInput.value = storedMealKits.join(", ");
+  scheduleCloudSave();
+}
+
+function loadSavedPlan() {
+  try {
+    return JSON.parse(localStorage.getItem("lastPlan") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function loadSavedPlanIngredients() {
+  try {
+    return JSON.parse(localStorage.getItem("lastIngredients") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveSavedPlan() {
+  if (!lastPlan) return;
+  localStorage.setItem("lastPlan", JSON.stringify(lastPlan));
+  localStorage.setItem("lastIngredients", JSON.stringify(lastIngredients || []));
+  scheduleCloudSave();
+}
+
+function getCurrentAppSettings() {
+  return {
+    avoid: avoidInput.value,
+    style: styleInput.value,
+    startDate: startDateInput.value,
+    lunchEase: lunchEaseInput.value,
+    dinnerEase: dinnerEaseInput.value,
+    categoryPreferences: getCategoryPreferences()
+  };
+}
+
+function loadAppSettings() {
+  try {
+    return JSON.parse(localStorage.getItem("appSettings") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveAppSettings() {
+  localStorage.setItem("appSettings", JSON.stringify(getCurrentAppSettings()));
+  scheduleCloudSave();
 }
 
 function addMealKitChip() {
@@ -940,6 +1019,7 @@ function loadCustomRecipes() {
 
 function saveCustomRecipes() {
   localStorage.setItem("customRecipes", JSON.stringify(customRecipes));
+  scheduleCloudSave();
 }
 
 saveCustomRecipeButton.addEventListener("click", () => {
@@ -1067,6 +1147,296 @@ function clearCustomRecipeForm() {
   saveCustomRecipeButton.textContent = "내 레시피 추가";
 }
 
+function collectBackupData() {
+  return {
+    app: "fridge-meal-planner",
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    storedIngredients,
+    storedMealKits,
+    customRecipes,
+    recipeOverrides,
+    deletedRecipeIds: [...deletedRecipeIds],
+    lastPlan,
+    lastIngredients,
+    settings: getCurrentAppSettings()
+  };
+}
+
+function exportAppData() {
+  const data = collectBackupData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+
+  link.href = url;
+  link.download = `fridge-meal-planner-backup-${date}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  setSyncStatus("백업 파일을 만들었습니다. 이 파일을 다른 기기에서 불러오면 같은 데이터로 맞출 수 있어요.");
+}
+
+async function createSyncLink() {
+  try {
+    const encoded = encodeSyncData(collectBackupData());
+    const url = `${location.origin}${location.pathname}${location.search}#sync=${encoded}`;
+
+    if (url.length > 120000) {
+      setSyncStatus("동기화 링크가 너무 길어요. 내 레시피나 식단 데이터가 많아서 이 경우에는 백업 파일 방식을 써주세요.", true);
+      return;
+    }
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "냉장고 식단 동기화 링크",
+        text: "이 링크를 다른 기기에서 열면 냉장고 식단 앱 데이터가 옮겨집니다.",
+        url
+      });
+      setSyncStatus("동기화 링크를 공유했습니다. 다른 기기에서 링크를 열면 자동으로 불러옵니다.");
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+    setSyncStatus("동기화 링크를 복사했습니다. 카톡/메모/메일로 보내고 다른 기기에서 열어주세요.");
+  } catch {
+    setSyncStatus("동기화 링크를 만들지 못했습니다. 브라우저 권한 문제일 수 있어 백업 파일 방식을 사용해주세요.", true);
+  }
+}
+
+async function importAppData(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const data = JSON.parse(await file.text());
+    applyBackupData(data);
+    setSyncStatus("백업 파일을 불러왔습니다. 이 기기의 재료, 식단, 내 레시피가 백업 내용으로 바뀌었어요.");
+  } catch {
+    setSyncStatus("백업 파일을 읽지 못했습니다. 이 앱에서 만든 JSON 백업 파일인지 확인해주세요.", true);
+  } finally {
+    event.target.value = "";
+  }
+}
+
+function importDataFromUrlHash() {
+  if (!location.hash.startsWith("#sync=")) return;
+
+  try {
+    const data = decodeSyncData(location.hash.slice("#sync=".length));
+    applyBackupData(data);
+    history.replaceState(null, "", `${location.pathname}${location.search}`);
+    setSyncStatus("동기화 링크를 불러왔습니다. 이 기기의 데이터가 링크 내용으로 바뀌었어요.");
+    activateTab(lastPlan ? "plan" : "ingredients");
+  } catch {
+    setSyncStatus("동기화 링크를 읽지 못했습니다. 링크가 중간에 잘리지 않았는지 확인해주세요.", true);
+  }
+}
+
+function applyBackupData(data) {
+  if (data.app !== "fridge-meal-planner") {
+    throw new Error("not-backup");
+  }
+
+  storedIngredients = { ...getEmptyStoredIngredients(), ...(data.storedIngredients || {}) };
+  storedMealKits = Array.isArray(data.storedMealKits) ? data.storedMealKits : [];
+  customRecipes = Array.isArray(data.customRecipes) ? data.customRecipes : [];
+  recipeOverrides = data.recipeOverrides && typeof data.recipeOverrides === "object" ? data.recipeOverrides : {};
+  deletedRecipeIds = new Set(Array.isArray(data.deletedRecipeIds) ? data.deletedRecipeIds : []);
+  lastPlan = Array.isArray(data.lastPlan) ? data.lastPlan : null;
+  lastIngredients = Array.isArray(data.lastIngredients) ? data.lastIngredients : [];
+
+  applyImportedSettings(data.settings || {});
+  saveAppSettings();
+  saveStoredIngredients();
+  saveStoredMealKits();
+  saveCustomRecipes();
+  saveRecipeOverrides();
+  saveDeletedRecipeIds();
+  if (lastPlan) {
+    saveSavedPlan();
+    alternatePlanButton.disabled = false;
+    calendarButton.disabled = false;
+    renderPlan(lastPlan, lastIngredients);
+  } else {
+    localStorage.removeItem("lastPlan");
+    localStorage.removeItem("lastIngredients");
+  }
+
+  renderIngredientChips();
+  renderMealKitChips();
+  renderCustomRecipes();
+  renderRecipeManager();
+  updateEaseLabels();
+  updateCategoryRatioLabels();
+}
+
+function encodeSyncData(data) {
+  const json = JSON.stringify(data);
+  const bytes = new TextEncoder().encode(json);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function decodeSyncData(value) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function applyImportedSettings(settings) {
+  if (typeof settings.avoid === "string") avoidInput.value = settings.avoid;
+  if (typeof settings.style === "string") styleInput.value = settings.style;
+  if (typeof settings.startDate === "string") startDateInput.value = settings.startDate || getTodayInputValue();
+  if (settings.lunchEase !== undefined) lunchEaseInput.value = String(settings.lunchEase);
+  if (settings.dinnerEase !== undefined) dinnerEaseInput.value = String(settings.dinnerEase);
+  if (settings.categoryPreferences?.weights) setCategoryRatios(settings.categoryPreferences.weights);
+  if (randomCategoryModeInput) {
+    randomCategoryModeInput.checked = Boolean(settings.categoryPreferences?.random);
+  }
+}
+
+function setSyncStatus(message, isError = false) {
+  if (!syncStatus) return;
+  syncStatus.textContent = message;
+  syncStatus.classList.toggle("is-error", isError);
+}
+
+function setupFirebaseSync() {
+  if (window.firebaseSync) {
+    attachFirebaseSync();
+    return;
+  }
+
+  window.addEventListener("firebase-sync-ready", attachFirebaseSync, { once: true });
+  setSyncStatus("자동 동기화를 준비하는 중입니다.");
+}
+
+function attachFirebaseSync() {
+  const sync = window.firebaseSync;
+  if (!sync) {
+    setSyncStatus("자동 동기화를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.", true);
+    return;
+  }
+
+  sync.onAuthStateChanged(async (user) => {
+    firebaseUser = user;
+    updateFirebaseButtons();
+
+    if (firebaseUnsubscribe) {
+      firebaseUnsubscribe();
+      firebaseUnsubscribe = null;
+    }
+
+    if (!user) {
+      setSyncStatus("Google로 로그인하면 핸드폰과 PC가 자동으로 같은 데이터를 사용합니다.");
+      return;
+    }
+
+    setSyncStatus(`${user.displayName || "Google 계정"}으로 동기화 중입니다.`);
+    await loadCloudDataOnce(user.uid);
+    firebaseUnsubscribe = sync.onSnapshot(sync.userDoc(user.uid), (snapshot) => {
+      const cloudData = snapshot.data()?.appData;
+      if (!cloudData) return;
+      applyCloudData(cloudData);
+    });
+    scheduleCloudSave();
+  });
+}
+
+async function signInToFirebaseSync() {
+  const sync = window.firebaseSync;
+  if (!sync) {
+    setSyncStatus("자동 동기화 준비가 아직 끝나지 않았습니다. 잠시 후 다시 눌러주세요.", true);
+    return;
+  }
+
+  try {
+    setSyncStatus("Google 로그인 창을 여는 중입니다.");
+    await sync.signIn();
+  } catch {
+    setSyncStatus("Google 로그인에 실패했습니다. Firebase Authentication 설정과 허용 도메인을 확인해주세요.", true);
+  }
+}
+
+async function signOutFromFirebaseSync() {
+  try {
+    await window.firebaseSync?.signOut();
+    firebaseUser = null;
+    updateFirebaseButtons();
+    setSyncStatus("동기화에서 로그아웃했습니다. 이 기기의 저장 데이터는 그대로 남아 있습니다.");
+  } catch {
+    setSyncStatus("로그아웃하지 못했습니다. 잠시 후 다시 시도해주세요.", true);
+  }
+}
+
+function updateFirebaseButtons() {
+  if (firebaseSyncButton) {
+    firebaseSyncButton.textContent = firebaseUser ? "자동 동기화 켜짐" : "Google로 자동 동기화";
+    firebaseSyncButton.disabled = Boolean(firebaseUser);
+  }
+  if (firebaseSignOutButton) {
+    firebaseSignOutButton.hidden = !firebaseUser;
+  }
+}
+
+async function loadCloudDataOnce(uid) {
+  const sync = window.firebaseSync;
+  if (!sync) return;
+
+  const snapshot = await sync.getDoc(sync.userDoc(uid));
+  const cloudData = snapshot.data()?.appData;
+  if (cloudData) {
+    applyCloudData(cloudData);
+    setSyncStatus("클라우드에 저장된 데이터를 이 기기에 불러왔습니다.");
+    return;
+  }
+
+  await saveCloudDataNow();
+  setSyncStatus("이 기기의 현재 데이터를 클라우드에 처음 저장했습니다.");
+}
+
+function applyCloudData(data) {
+  firebaseApplyingRemote = true;
+  try {
+    applyBackupData(data);
+    activateTab(lastPlan ? "plan" : activeTab || "ingredients");
+  } finally {
+    firebaseApplyingRemote = false;
+  }
+}
+
+function scheduleCloudSave() {
+  if (firebaseApplyingRemote || !firebaseUser || !window.firebaseSync) return;
+  clearTimeout(firebaseSaveTimer);
+  firebaseSaveTimer = setTimeout(saveCloudDataNow, 900);
+}
+
+async function saveCloudDataNow() {
+  if (firebaseApplyingRemote || !firebaseUser || !window.firebaseSync) return;
+
+  try {
+    const sync = window.firebaseSync;
+    await sync.setDoc(
+      sync.userDoc(firebaseUser.uid),
+      {
+        appData: collectBackupData(),
+        updatedAt: sync.serverTimestamp()
+      },
+      { merge: true }
+    );
+    setSyncStatus(`${firebaseUser.displayName || "Google 계정"}에 자동 저장됐습니다.`);
+  } catch {
+    setSyncStatus("클라우드 저장에 실패했습니다. Firestore 권한 설정이나 인터넷 연결을 확인해주세요.", true);
+  }
+}
+
 async function loadSeedRecipes() {
   try {
     const data = Array.isArray(window.RECIPE_DATA) ? window.RECIPE_DATA : await fetchRecipeData();
@@ -1104,6 +1474,7 @@ function loadRecipeOverrides() {
 
 function saveRecipeOverrides() {
   localStorage.setItem("recipeOverrides", JSON.stringify(recipeOverrides));
+  scheduleCloudSave();
 }
 
 function loadDeletedRecipeIds() {
@@ -1116,6 +1487,7 @@ function loadDeletedRecipeIds() {
 
 function saveDeletedRecipeIds() {
   localStorage.setItem("deletedRecipeIds", JSON.stringify([...deletedRecipeIds]));
+  scheduleCloudSave();
 }
 
 function getSeedRecipePool() {
