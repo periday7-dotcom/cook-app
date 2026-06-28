@@ -425,7 +425,8 @@ const chipLists = {
   cold: document.querySelector("#coldChips"),
   frozen: document.querySelector("#frozenChips"),
   room: document.querySelector("#roomChips"),
-  seasoning: document.querySelector("#seasoningChips")
+  seasoning: document.querySelector("#seasoningChips"),
+  side: document.querySelector("#sideChips")
 };
 const avoidInput = document.querySelector("#avoid");
 const styleInput = document.querySelector("#style");
@@ -806,7 +807,7 @@ function getSelectedStartDate() {
 }
 
 function loadStoredIngredients() {
-  const empty = { cold: [], frozen: [], room: [], seasoning: [] };
+  const empty = { cold: [], frozen: [], room: [], seasoning: [], side: [] };
   try {
     return { ...empty, ...JSON.parse(localStorage.getItem("storedIngredients") || "{}") };
   } catch {
