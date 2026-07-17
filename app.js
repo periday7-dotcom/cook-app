@@ -425,14 +425,19 @@ const createSyncLinkButton = document.querySelector("#createSyncLinkButton");
 const exportDataButton = document.querySelector("#exportDataButton");
 const importDataFile = document.querySelector("#importDataFile");
 const syncStatus = document.querySelector("#syncStatus");
+const ingredientSearchInput = document.querySelector("#ingredientSearchInput");
+const ingredientSearchSummary = document.querySelector("#ingredientSearchSummary");
 const ingredientChipInputs = document.querySelectorAll(".ingredient-chip-input");
 const addChipButtons = document.querySelectorAll(".add-chip-button");
+const deleteSelectedChipButtons = document.querySelectorAll(".delete-selected-chip-button");
 const chipLists = {
   cold: document.querySelector("#coldChips"),
   frozen: document.querySelector("#frozenChips"),
   room: document.querySelector("#roomChips"),
   seasoning: document.querySelector("#seasoningChips"),
-  side: document.querySelector("#sideChips")
+  side: document.querySelector("#sideChips"),
+  ramen: document.querySelector("#ramenChips"),
+  dessert: document.querySelector("#dessertChips")
 };
 const avoidInput = document.querySelector("#avoid");
 const styleInput = document.querySelector("#style");
@@ -483,6 +488,8 @@ let customRecipes = loadCustomRecipes();
 let seedRecipes = [...recipes];
 let recipeOverrides = loadRecipeOverrides();
 let deletedRecipeIds = loadDeletedRecipeIds();
+const selectedIngredientChips = new Set();
+const selectedMealKitChips = new Set();
 let recipeDataLoadStatus = "loading";
 let recipeManagerVisibleCount = 120;
 let activeTab = "builder";
@@ -549,6 +556,10 @@ addChipButtons.forEach((button) => {
   button.addEventListener("click", () => addIngredientChip(button.dataset.target));
 });
 
+deleteSelectedChipButtons.forEach((button) => {
+  button.addEventListener("click", () => deleteSelectedChips(button.dataset.target));
+});
+
 ingredientChipInputs.forEach((input) => {
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -566,6 +577,11 @@ mealKitChipInput?.addEventListener("keydown", (event) => {
     event.preventDefault();
     addMealKitChip();
   }
+});
+
+ingredientSearchInput?.addEventListener("input", () => {
+  renderIngredientChips();
+  renderMealKitChips();
 });
 
 categoryRatioInputs.forEach((input) => {
@@ -670,9 +686,11 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   const ingredients = getAllStoredIngredients();
   const mealKits = storedMealKits;
+  const ramenItems = getStoredRamenItems();
+  const dessertItems = getStoredDessertItems();
   const avoid = parseList(avoidInput.value);
 
-  if (ingredients.length === 0 && mealKits.length === 0) {
+  if (ingredients.length === 0 && mealKits.length === 0 && ramenItems.length === 0) {
     summary.textContent = "재료나 밀키트를 하나 이상 입력해주세요. 예: 달걀, 김치, 밥 또는 부대찌개 밀키트";
     mealPlan.innerHTML = "";
     activateTab("ingredients");
@@ -682,7 +700,16 @@ form.addEventListener("submit", (event) => {
 
   const difficultyPreferences = getDifficultyPreferences();
   const categoryPreferences = getCategoryPreferences();
-  const plan = buildPlan(ingredients, mealKits, avoid, styleInput.value, difficultyPreferences, categoryPreferences);
+  const plan = buildPlan(
+    ingredients,
+    mealKits,
+    ramenItems,
+    dessertItems,
+    avoid,
+    styleInput.value,
+    difficultyPreferences,
+    categoryPreferences
+  );
   lastPlan = plan;
   lastIngredients = ingredients;
   saveAppSettings();
@@ -833,7 +860,7 @@ function getSelectedStartDate() {
 }
 
 function getEmptyStoredIngredients() {
-  return { cold: [], frozen: [], room: [], seasoning: [], side: [] };
+  return { cold: [], frozen: [], room: [], seasoning: [], side: [], ramen: [], dessert: [] };
 }
 
 function loadStoredIngredients() {
@@ -852,7 +879,17 @@ function saveStoredIngredients() {
 }
 
 function getAllStoredIngredients() {
-  return Object.values(storedIngredients).flat().filter(Boolean);
+  return ["cold", "frozen", "room", "seasoning", "side"]
+    .flatMap((storage) => storedIngredients[storage] || [])
+    .filter(Boolean);
+}
+
+function getStoredRamenItems() {
+  return storedIngredients.ramen || [];
+}
+
+function getStoredDessertItems() {
+  return storedIngredients.dessert || [];
 }
 
 function addIngredientChip(storage) {
@@ -874,36 +911,90 @@ function addIngredientChip(storage) {
   renderIngredientChips();
 }
 
-function removeIngredientChip(storage, ingredientIndex) {
+function getIngredientChipKey(storage, item) {
+  return `${storage}::${normalize(item)}`;
+}
+
+function toggleIngredientChip(storage, item) {
+  const key = getIngredientChipKey(storage, item);
+  if (selectedIngredientChips.has(key)) {
+    selectedIngredientChips.delete(key);
+  } else {
+    selectedIngredientChips.add(key);
+  }
+  renderIngredientChips();
+}
+
+function deleteSelectedChips(target) {
+  if (target === "mealKit") {
+    deleteSelectedMealKitChips();
+    return;
+  }
+  deleteSelectedIngredientChips(target);
+}
+
+function deleteSelectedIngredientChips(storage) {
   if (!storage || !Array.isArray(storedIngredients[storage])) return;
-  const index = Number(ingredientIndex);
-  if (!Number.isInteger(index) || index < 0) return;
-  storedIngredients[storage].splice(index, 1);
+  storedIngredients[storage] = storedIngredients[storage].filter((item) => {
+    const key = getIngredientChipKey(storage, item);
+    if (!selectedIngredientChips.has(key)) return true;
+    selectedIngredientChips.delete(key);
+    return false;
+  });
   saveStoredIngredients();
   renderIngredientChips();
+}
+
+function getIngredientSearchQuery() {
+  return normalize(ingredientSearchInput?.value || "");
+}
+
+function matchesIngredientSearch(item) {
+  const query = getIngredientSearchQuery();
+  return !query || normalize(item).includes(query);
+}
+
+function updateIngredientSearchSummary() {
+  if (!ingredientSearchSummary) return;
+  const allItems = [
+    ...Object.values(storedIngredients).flat(),
+    ...storedMealKits
+  ].filter(Boolean);
+  const query = getIngredientSearchQuery();
+  if (!query) {
+    ingredientSearchSummary.textContent = `총 ${allItems.length}개 저장됨`;
+    return;
+  }
+  const matchedCount = allItems.filter(matchesIngredientSearch).length;
+  ingredientSearchSummary.textContent = `${matchedCount}개 찾음 / 전체 ${allItems.length}개`;
 }
 
 function renderIngredientChips() {
   Object.entries(chipLists).forEach(([storage, container]) => {
     if (!container) return;
     const items = storedIngredients[storage] || [];
-    container.innerHTML = items.length
-      ? items
+    const visibleItems = items.filter(matchesIngredientSearch);
+    container.innerHTML = visibleItems.length
+      ? visibleItems
           .map(
-            (item, index) => `
-              <button class="ingredient-chip" type="button" data-storage="${storage}" data-index="${index}" title="눌러서 삭제">
-                ${escapeHtml(item)}<span aria-hidden="true">×</span>
+            (item) => {
+              const selected = selectedIngredientChips.has(getIngredientChipKey(storage, item));
+              return `
+              <button class="ingredient-chip${selected ? " is-selected" : ""}" type="button" data-storage="${storage}" data-item="${escapeHtml(item)}" aria-pressed="${selected}" title="선택하려면 누르세요">
+                ${escapeHtml(item)}
               </button>
-            `
+            `;
+            }
           )
           .join("")
-      : `<span class="empty-chip">아직 없음</span>`;
+      : `<span class="empty-chip">${items.length ? "검색 결과 없음" : "아직 없음"}</span>`;
   });
 
   document.querySelectorAll(".ingredient-chip[data-storage]").forEach((chip) => {
-    chip.addEventListener("click", () => removeIngredientChip(chip.dataset.storage, chip.dataset.index));
+    chip.addEventListener("click", () => toggleIngredientChip(chip.dataset.storage, chip.dataset.item));
   });
   ingredientsInput.value = getAllStoredIngredients().join(", ");
+  updateIngredientSearchSummary();
 }
 
 function loadStoredMealKits() {
@@ -983,30 +1074,50 @@ function addMealKitChip() {
   renderMealKitChips();
 }
 
-function removeMealKitChip(mealKit) {
-  storedMealKits = storedMealKits.filter((item) => normalize(item) !== normalize(mealKit));
+function toggleMealKitChip(mealKit) {
+  const key = normalize(mealKit);
+  if (selectedMealKitChips.has(key)) {
+    selectedMealKitChips.delete(key);
+  } else {
+    selectedMealKitChips.add(key);
+  }
+  renderMealKitChips();
+}
+
+function deleteSelectedMealKitChips() {
+  storedMealKits = storedMealKits.filter((item) => {
+    const key = normalize(item);
+    if (!selectedMealKitChips.has(key)) return true;
+    selectedMealKitChips.delete(key);
+    return false;
+  });
   saveStoredMealKits();
   renderMealKitChips();
 }
 
 function renderMealKitChips() {
   if (!mealKitChips) return;
-  mealKitChips.innerHTML = storedMealKits.length
-    ? storedMealKits
+  const visibleItems = storedMealKits.filter(matchesIngredientSearch);
+  mealKitChips.innerHTML = visibleItems.length
+    ? visibleItems
         .map(
-          (item) => `
-            <button class="ingredient-chip meal-kit-chip" type="button" data-meal-kit="${item}" title="눌러서 삭제">
-              ${item}<span aria-hidden="true">×</span>
+          (item) => {
+            const selected = selectedMealKitChips.has(normalize(item));
+            return `
+            <button class="ingredient-chip meal-kit-chip${selected ? " is-selected" : ""}" type="button" data-meal-kit="${escapeHtml(item)}" aria-pressed="${selected}" title="선택하려면 누르세요">
+              ${escapeHtml(item)}
             </button>
-          `
+          `;
+          }
         )
         .join("")
-    : `<span class="empty-chip">아직 없음</span>`;
+    : `<span class="empty-chip">${storedMealKits.length ? "검색 결과 없음" : "아직 없음"}</span>`;
 
   mealKitChips.querySelectorAll(".meal-kit-chip").forEach((chip) => {
-    chip.addEventListener("click", () => removeMealKitChip(chip.dataset.mealKit));
+    chip.addEventListener("click", () => toggleMealKitChip(chip.dataset.mealKit));
   });
   mealKitsInput.value = storedMealKits.join(", ");
+  updateIngredientSearchSummary();
 }
 
 function loadCustomRecipes() {
@@ -1360,8 +1471,9 @@ async function signInToFirebaseSync() {
   try {
     setSyncStatus("Google 로그인 창을 여는 중입니다.");
     await sync.signIn();
-  } catch {
-    setSyncStatus("Google 로그인에 실패했습니다. Firebase Authentication 설정과 허용 도메인을 확인해주세요.", true);
+  } catch (error) {
+    const code = error?.code ? ` (${error.code})` : "";
+    setSyncStatus(`Google 로그인에 실패했습니다${code}. Firebase Authentication 설정과 허용 도메인을 확인해주세요.`, true);
   }
 }
 
@@ -2057,10 +2169,10 @@ function setOcrStatus(message, isError = false) {
   ocrStatus.classList.toggle("is-error", isError);
 }
 
-function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences, categoryPreferences) {
+function buildPlan(ingredients, mealKits, ramenItems, dessertItems, avoid, style, difficultyPreferences, categoryPreferences) {
   const usedTitles = new Set();
   const normalizedAvoid = avoid.map(normalize);
-  const recipePool = [...createMealKitRecipes(mealKits), ...getAllRecipePool()];
+  const recipePool = [...createMealKitRecipes(mealKits), ...createRamenRecipes(ramenItems), ...getAllRecipePool()];
 
   return days.map((day, dayIndex) => {
     const menu = meals.map(([mealKey, mealLabel], mealIndex) => {
@@ -2096,9 +2208,10 @@ function buildPlan(ingredients, mealKits, avoid, style, difficultyPreferences, c
         mealKey,
         mealLabel,
         ...selected,
-        difficulty: selected.isMealKit ? 1 : getDifficulty(selected.title),
-        cookingMinutes: selected.isMealKit ? 15 : getCookingMinutes(selected.title),
+        difficulty: selected.isMealKit || selected.isRamen ? 1 : getDifficulty(selected.title),
+        cookingMinutes: selected.isMealKit || selected.isRamen ? 10 : getCookingMinutes(selected.title),
         category: getRecipeCategory(selected),
+        dessert: pickDessert(dessertItems, dayIndex, mealIndex),
         matched,
         missing,
         estimatedBudget: estimateBudget(missing)
@@ -2121,6 +2234,23 @@ function createMealKitRecipes(mealKits) {
   }));
 }
 
+function createRamenRecipes(ramenItems) {
+  return ramenItems.map((title, index) => ({
+    title,
+    type: "quick",
+    category: "라면",
+    cuisine: "기타",
+    tags: [],
+    meal: index % 2 === 0 ? ["lunch", "dinner"] : ["dinner", "lunch"],
+    isRamen: true
+  }));
+}
+
+function pickDessert(dessertItems, dayIndex, mealIndex) {
+  if (!dessertItems.length) return "";
+  return dessertItems[(dayIndex * meals.length + mealIndex + variationSeed) % dessertItems.length];
+}
+
 function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePreference, categoryPreferences) {
   const matchScore = recipe.tags.reduce((score, tag) => {
     return score + (includesIngredient(ingredients, tag) ? 8 : 0);
@@ -2128,9 +2258,9 @@ function scoreRecipe(recipe, ingredients, style, dayIndex, mealIndex, easePrefer
   const styleScore = recipe.type === style ? 4 : style === "balanced" ? 1 : 0;
   const varietyScore =
     ((dayIndex + 1) * (mealIndex + 2) + recipe.title.length + variationSeed * 7) % 11;
-  const mealKitScore = recipe.isMealKit ? 18 - dayIndex : 0;
+  const mealKitScore = recipe.isMealKit || recipe.isRamen ? 18 - dayIndex : 0;
   const targetDifficulty = easeToDifficulty(easePreference);
-  const difficultyDistance = Math.abs((recipe.isMealKit ? 1 : getDifficulty(recipe.title)) - targetDifficulty);
+  const difficultyDistance = Math.abs((recipe.isMealKit || recipe.isRamen ? 1 : getDifficulty(recipe.title)) - targetDifficulty);
   const difficultyScore = 8 - difficultyDistance * 5;
   const categoryScore = getCategoryScore(recipe, categoryPreferences, dayIndex, mealIndex);
   return matchScore + styleScore + varietyScore + difficultyScore + mealKitScore + categoryScore;
@@ -2307,7 +2437,9 @@ function renderMeal(meal, dayIndex, mealIndex) {
       <p class="meal-title">${meal.title}</p>
       <p class="meal-category">카테고리: ${meal.category}${meal.isCustom ? " · 내 레시피" : ""}</p>
       ${meal.isMealKit ? `<p class="meal-kit-label">밀키트/완제품</p>` : ""}
+      ${meal.isRamen ? `<p class="meal-kit-label">라면 메인</p>` : ""}
       <p class="meal-difficulty">난이도: ${getDifficultyLabel(meal.difficulty)} · 조리시간: 약 ${meal.cookingMinutes}분</p>
+      ${meal.dessert ? `<p class="meal-dessert">후식: ${escapeHtml(meal.dessert)}</p>` : ""}
       <p class="meal-ingredients">활용 재료: ${matchedText}</p>
       <p class="meal-budget">추가 재료: ${missingText} · 예상 ${formatWon(meal.estimatedBudget)}</p>
       ${priceLinks}
@@ -2394,10 +2526,12 @@ function createCalendarEvent(meal, date) {
   const endsAt = new Date(startsAt.getTime() + Math.max(meal.cookingMinutes, 30) * 60000);
   const { naverUrl, youtubeUrl } = getRecipeUrls(meal.title);
   const missingText = meal.missing.length > 0 ? meal.missing.join(", ") : "추가 구매 없음";
+  const mealType = meal.isMealKit ? "밀키트/완제품" : meal.isRamen ? "라면" : "직접 조리";
   const description = [
     `레시피 이름: ${meal.title}`,
     `카테고리: ${meal.category || "기본"}`,
-    `구분: ${meal.isMealKit ? "밀키트/완제품" : "직접 조리"}`,
+    `구분: ${mealType}`,
+    ...(meal.dessert ? [`후식: ${meal.dessert}`] : []),
     `유튜브 링크: ${youtubeUrl}`,
     `블로그/레시피 링크: ${naverUrl}`,
     `추가 구매 재료: ${missingText}`
