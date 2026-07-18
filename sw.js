@@ -1,4 +1,4 @@
-const CACHE_NAME = "fridge-meal-planner-v28";
+const CACHE_NAME = "fridge-meal-planner-v29";
 const APP_SHELL = [
   "./",
   "./index.html",
